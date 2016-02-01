@@ -36,12 +36,12 @@ RUN mkdir /logs/gunicorn
 EXPOSE 80 8000
 
 # Configure Nginx
-ADD Deployment /Deployment
-RUN ln -s /Deployment/nginx.conf /etc/nginx/sites-enabled/django_docker.conf
+ADD deployment /deployment
+RUN ln -s /deployment/nginx.conf /etc/nginx/sites-enabled/django_docker.conf
 RUN rm /etc/nginx/sites-enabled/default
 
 # Configure Supervisor
-COPY /Deployment/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY /deployment/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Enable production settings by default; for development, this can be set to
 # `false` in `docker run --env`
@@ -50,7 +50,7 @@ ENV DJANGO_PRODUCTION=true
 # Configure Django project
 ADD . /code
 WORKDIR /code
-RUN chmod ug+x /code/Deployment/initialize.sh
+RUN chmod ug+x /code/deployment/initialize.sh
 
 # Run Supervisor
 CMD ["/usr/bin/supervisord"]
