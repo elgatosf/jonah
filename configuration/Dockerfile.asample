@@ -1,0 +1,56 @@
+FROM ubuntu:14.04
+
+# Set terminal to be noninteractive
+ENV DEBIAN_FRONTEND noninteractive
+
+# Install packages
+RUN apt-get update && apt-get install -y \
+    git \
+    nginx \
+    python-dev \
+    python-setuptools \
+    python-urllib3 \
+    supervisor \
+    vim
+RUN easy_install pip
+RUN apt-get build-dep -y python-psycopg2
+
+# Handle urllib3 InsecurePlatformWarning
+RUN apt-get install -y libffi-dev libssl-dev libpython2.7-dev
+RUN pip install requests[security] ndg-httpsclient pyasn1
+
+# Install Python Requirements
+ADD requirements.txt /requirements.txt
+RUN pip install -r /requirements.txt
+
+# configure environment
+RUN mkdir /djangomedia
+RUN mkdir /static
+RUN mkdir /logs
+RUN mkdir /logs/nginx
+RUN mkdir /logs/gunicorn
+
+# Expose ports
+# 80 = Nginx
+# 8000 = Gunicorn
+EXPOSE 80 8000
+
+# Configure Nginx
+ADD Deployment /Deployment
+RUN ln -s /Deployment/nginx.conf /etc/nginx/sites-enabled/django_docker.conf
+RUN rm /etc/nginx/sites-enabled/default
+
+# Configure Supervisor
+COPY /Deployment/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Enable production settings by default; for development, this can be set to
+# `false` in `docker run --env`
+ENV DJANGO_PRODUCTION=true
+
+# Configure Django project
+ADD . /code
+WORKDIR /code
+RUN chmod ug+x /code/Deployment/initialize.sh
+
+# Run Supervisor
+CMD ["/usr/bin/supervisord"]

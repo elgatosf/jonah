@@ -1,0 +1,8 @@
+*.swp
+*.swo
+*.pyc
+*.sqlite3
+config.ini
+supervisord.log
+supervisord.pid
+
