@@ -1,3 +1,13 @@
+# Django Deployment via Docker
+
+This repository is a fork of [Joe Mornin's excellent `django-docker`](https://github.com/morninj/django-docker).
+
+To deploy a django project with this fork, these requirements have to be met:
+
+  - your Django project has to be named `ddp`. Sorry.
+  - You need to have a `Dockerfile`, `.dockerignore`, and `newrelic.ini` in the root of your repository (see the
+    `configuration` directory for starting points)
+
 # django-docker
 
 This repo has everything you need to develop and deploy Django projects with Docker. If there's an improvement you'd like to see, feel free to add an issue or open a pull request.
