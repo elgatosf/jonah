@@ -7,6 +7,7 @@ To deploy a django project with this fork, these requirements have to be met:
   - your Django project has to be named `ddp`. Sorry.
   - You need to have a `Dockerfile`, `.dockerignore`, and `newrelic.ini` in the root of your repository (see the
     `configuration` directory for starting points)
+  - you'll need a `requirements.txt` that includes at least `newrelic`, `gunicorn` and `django`.
 
 # django-docker
 
