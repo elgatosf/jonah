@@ -18,7 +18,7 @@ RUN apt-get build-dep -y python-psycopg2
 
 # Handle urllib3 InsecurePlatformWarning
 RUN apt-get install -y libffi-dev libssl-dev libpython2.7-dev
-RUN pip install requests[security] ndg-httpsclient pyasn1
+RUN pip install requests[security] ndg-httpsclient pyasn1 newrelic gunicorn
 
 # Install Python Requirements
 ADD requirements.txt /requirements.txt
