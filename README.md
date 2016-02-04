@@ -18,17 +18,36 @@ You can also optionally have a file called `supervisord_local.conf`. Its content
 
 These are the defaults, overwrite them as necessary
 
-    ENV NEW_RELIC_LICENSE_KEY # new relic licence key (leave at default)
-    ENV NEW_RELIC_APP_NAME # Display Name in New Relic
-    ENV NEW_RELIC_ENVIRONMENT=development # "development", "test", "staging" or "production".
-    ENV NEW_RELIC_CONFIG_FILE=/deployment/newrelic.ini # leave it at default
+Debug Settings:
+
+    DJANGO_PRODUCTION=true # if "true" debug is set to false and no DB created
+    ROOT_PASSWORD # password for the "root" admin user in django-admin
+    
+
+Database settings:
+
+    SECRET_KEY # django hash salt
     DATABASE_HOST # host address of postgresql server
     DATABASE_NAME
     DATABASE_PASSWORD
     DATABASE_USERNAME
-    DJANGO_PRODUCTION=true # if "true" debug is set to false and no DB created
-    ROOT_PASSWORD # password for the "root" admin user in django-admin
-    SECRET_KEY # django hash salt
+    
+New Relic Settings
+
+    NEW_RELIC_APP_NAME # Display Name in New Relic
+    NEW_RELIC_LICENSE_KEY # new relic licence key (leave at default)
+    NEW_RELIC_ENVIRONMENT=development # "development", "test", "staging" or "production".
+    NEW_RELIC_CONFIG_FILE=/deployment/newrelic.ini # leave it at default
+    
+Email Settings
+    
+    AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY
+    AWS_SES_SECRET_ACCESS_KEY 
+    AWS_SES_ACCESS_KEY_ID
+    AWS_SES_REGION_NAME
+    AWS_SES_REGION_ENDPOINT 
+
 
 # django-docker
 
