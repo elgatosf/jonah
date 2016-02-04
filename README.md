@@ -5,9 +5,24 @@ This repository is a fork of [Joe Mornin's excellent `django-docker`](https://gi
 To deploy a django project with this fork, these requirements have to be met:
 
   - your Django project has to be named `ddp`. Sorry.
-  - You need to have a `Dockerfile`, `.dockerignore`, and `newrelic.ini` in the root of your repository (see the
-    `configuration` directory for starting points)
-  - you'll need a `requirements.txt` that includes at least `newrelic`, `gunicorn` and `django`.
+  
+Symlink the Dockerfile and .dockerignore into your root directory:
+
+    ln -s deployment/Dockerfile .
+    ln -s deployment/.dockerignore .
+    
+You can also optionally have a file called `supervisord_local.conf`. Its contents will be apppended to 
+`supervisord.conf` on build.
+
+## Environment Variables
+
+These are the defaults, overwrite them as necessary
+
+    ENV DJANGO_PRODUCTION=true
+    ENV NEW_RELIC_LICENSE_KEY=abc123123123
+    ENV NEW_RELIC_APP_NAME=Auth\Dev
+    ENV NEW_RELIC_ENVIRONMENT=development
+    ENV NEW_RELIC_CONFIG_FILE=/deployment/newrelic.ini
 
 # django-docker
 

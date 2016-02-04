@@ -41,17 +41,21 @@ ADD deployment /deployment
 RUN ln -s /deployment/nginx.conf /etc/nginx/sites-enabled/django_docker.conf
 RUN rm /etc/nginx/sites-enabled/default
 
-# Configure Supervisor
-COPY /deployment/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
 # Enable production settings by default; for development, this can be set to
 # `false` in `docker run --env`
 ENV DJANGO_PRODUCTION=true
+ENV NEW_RELIC_LICENSE_KEY=***REMOVED***
+ENV NEW_RELIC_APP_NAME=Auth\Dev
+ENV NEW_RELIC_CONFIG_FILE=/deployment/newrelic.ini
+ENV NEW_RELIC_ENVIRONMENT=development
 
 # Configure Django project
 ADD . /code
 WORKDIR /code
 RUN chmod ug+x /code/deployment/initialize.sh
+
+# Configure Supervisor
+RUN cat /code/deployment/supervisord.conf /code/supervisord_local.conf > /etc/supervisor/conf.d/supervisord.conf
 
 # Run Supervisor
 CMD ["/usr/bin/supervisord"]
