@@ -21,7 +21,7 @@ These are the defaults, overwrite them as necessary
     ENV DJANGO_PRODUCTION=true
     ENV NEW_RELIC_LICENSE_KEY=abc123123123
     ENV NEW_RELIC_APP_NAME=Auth\Dev
-    ENV NEW_RELIC_ENVIRONMENT=development
+    ENV NEW_RELIC_ENVIRONMENT=development # "development", "test", "staging" or "production".
     ENV NEW_RELIC_CONFIG_FILE=/deployment/newrelic.ini
 
 # django-docker
