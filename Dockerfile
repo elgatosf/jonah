@@ -55,6 +55,7 @@ WORKDIR /code
 RUN chmod ug+x /code/deployment/initialize.sh
 
 # Configure Supervisor
+RUN touch /code/supervisord_local.conf
 RUN cat /code/deployment/supervisord.conf /code/supervisord_local.conf > /etc/supervisor/conf.d/supervisord.conf
 
 # Run Supervisor
