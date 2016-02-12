@@ -75,9 +75,14 @@ class Deployer(object):
     def tag(self):
         """Tag git version and docker version"""
         self.build()
-        # todo
-        # git tag
-        # docker tag -f ***REMOVED***/fizz:latest ***REMOVED***/***REMOVED***/***REMOVED***:latest
+        print("Tagging...")
+        current_tag = self.run('git describe --tags').split('\n')[0]
+        new_tag = raw_input("Which tag should I use? (Current is %s, leave empty for staging tag): " % current_tag)
+
+        if len(new_tag) < 1:
+            new_tag = 'staging'
+        self.run('git tag -f ' + new_tag)
+        self.run('docker tag -f %s:latest %s:%s' % (self.full_name(environment='develop'), self.full_name(environment='staging'), new_tag))
 
     def test(self):
         """Build and run Unit Tests"""
