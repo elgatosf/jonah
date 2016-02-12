@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
+import os
 from subprocess import check_output
 
 import sys
 
+working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 class Deployer(object):
     image_name = 'fizz'
@@ -13,30 +16,60 @@ class Deployer(object):
         'live': 'omsn',
     }
 
+    configuration = {
+        'root_password': '123123',
+        'secret_key': 'abcba',
+    }
+
     def __init__(self):
         # todo: init with config
         pass
 
     @staticmethod
     def __dir__():
-        return ['build', 'develop', 'tag', 'test', 'stage', 'deploy']
+        return ['build', 'stop', 'develop', 'tag', 'test', 'stage', 'deploy']
+
+    @staticmethod
+    def run(input):
+        return check_output(input.split(' '))
 
     def full_name(self, environment='develop'):
-        # environemnt should be 'develop', 'stage', or 'live'
+        # environment should be 'develop', 'stage', or 'live'
         return "%s:%s" % (self.repository_name[environment], self.image_name)
 
     def build(self, environment='develop'):
         """Build the image"""
         print("Building... ", end="")
-        output = check_output(['docker', 'build', '-t', self.full_name(environment=environment), '.'])
+        output = self.run('docker build -t %s %s' % (self.full_name(environment=environment), working_dir))
+        print("OK")
+
+    def stop(self):
+        """Stop a previously running development server"""
+        print("Stopping previously started containers... ", end="")
+        container_ids = self.run('docker ps -q --filter="ancestor=%s:%s"' % (self.repository_name['develop'], self.image_name)).split("\n")
+        for container_id in container_ids:
+            if len(container_id) > 0:
+                print(container_id + ' ', end='')
+                self.run('docker stop ' + container_id)
         print("OK")
 
     def develop(self):
         """Run dev server"""
         self.build()
+        self.stop()
+        print("Starting dev server... ", end="")
+        output = check_output(['docker', 'run', '-d', '-p', '80:80', '--env', 'DJANGO_PRODUCTION=false', '--env', 'ROOT_PASSWORD=%s' % self.configuration['root_password'], '--env', 'SECRET_KEY=%s' % self.configuration['secret_key'], '-v', working_dir+':/code', self.full_name(environment='develop')])
+        print("OK")
+
+    def reload(self):
+        """Reload Django process on dev server"""
         # todo
-        # docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD=123123
-        # --env SECRET_KEY=abcabcabca -v (pwd):/code ***REMOVED***/fizz
+        pass
+
+    def shell(self):
+        """Get a shell on the dev server"""
+        # todo
+        pass
 
     def tag(self):
         """Tag git version and docker version"""
