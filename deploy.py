@@ -61,7 +61,7 @@ class Deployer(object):
         self.build()
         self.stop()
         print("Starting dev server... ", end="")
-        output = check_output(['docker', 'run', '-d', '-p', '80:80', '--env', 'DJANGO_PRODUCTION=false', '--env', 'ROOT_PASSWORD=%s' % self.configuration['root_password'], '--env', 'SECRET_KEY=%s' % self.configuration['secret_key'], '-v', working_dir+':/code', self.full_name(environment='develop')])
+        output = self.run('docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD=' + self.configuration['root_password'] + ' --env SECRET_KEY=' + self.configuration['secret_key'] + ' -v ' + working_dir+':/code ' + self.full_name(environment='develop'))
         print("OK")
 
     def reload(self):
