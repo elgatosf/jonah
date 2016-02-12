@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import os
 import sys
-from subprocess import check_output, CalledProcessError
+from subprocess import call, check_output, CalledProcessError
 
 working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -26,15 +26,20 @@ class Deployer(object):
 
     @staticmethod
     def __dir__():
-        return ['build', 'stop', 'reload', 'develop', 'tag', 'test', 'stage', 'deploy']
+        return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy']
 
     @staticmethod
-    def run(input):
+    def run(cmd):
         try:
-            return check_output(input.split(' '))
+            return check_output(cmd.split(' '))
         except CalledProcessError as e:
             print('Error\n\t' + e.output)
             exit(1)
+
+    def get_container_id(self):
+        """Returns the currently running container's ID if any"""
+        container_id = self.run('docker ps -q --filter="ancestor=%s:%s"' % (self.repository_name['develop'], self.image_name)).split('\n')[0]
+        return container_id
 
     def full_name(self, environment='develop'):
         # environment should be 'develop', 'stage', or 'live'
@@ -67,14 +72,13 @@ class Deployer(object):
     def reload(self):
         """Reload Django process on dev server"""
         print("Reloading Django... ", end='')
-        container_id = self.run('docker ps -q --filter="ancestor=%s:%s"' % (self.repository_name['develop'], self.image_name)).split('\n')[0]
-        self.run('docker exec -t -i %s killall gunicorn' % container_id)
+        self.run('docker exec -t -i %s killall gunicorn' % self.get_container_id())
         print("OK")
 
     def shell(self):
         """Get a shell on the dev server"""
-        # todo
-        pass
+        cmd = 'docker exec -t -i %s /bin/bash' % self.get_container_id().split(' ')[0]
+        call(cmd, shell=True)
 
     def tag(self):
         """Tag git version and docker version"""
