@@ -2,9 +2,8 @@
 from __future__ import print_function
 
 import os
-from subprocess import check_output
-
 import sys
+from subprocess import check_output, CalledProcessError
 
 working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -27,11 +26,15 @@ class Deployer(object):
 
     @staticmethod
     def __dir__():
-        return ['build', 'stop', 'develop', 'tag', 'test', 'stage', 'deploy']
+        return ['build', 'stop', 'reload', 'develop', 'tag', 'test', 'stage', 'deploy']
 
     @staticmethod
     def run(input):
-        return check_output(input.split(' '))
+        try:
+            return check_output(input.split(' '))
+        except CalledProcessError as e:
+            print('Error\n\t' + e.output)
+            exit(1)
 
     def full_name(self, environment='develop'):
         # environment should be 'develop', 'stage', or 'live'
