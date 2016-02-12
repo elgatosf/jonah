@@ -4,3 +4,4 @@
 config.ini
 supervisord.log
 supervisord.pid
+.idea
