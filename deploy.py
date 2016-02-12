@@ -66,8 +66,10 @@ class Deployer(object):
 
     def reload(self):
         """Reload Django process on dev server"""
-        # todo
-        pass
+        print("Reloading Django... ", end='')
+        container_id = self.run('docker ps -q --filter="ancestor=%s:%s"' % (self.repository_name['develop'], self.image_name)).split('\n')[0]
+        self.run('docker exec -t -i %s killall gunicorn' % container_id)
+        print("OK")
 
     def shell(self):
         """Get a shell on the dev server"""
