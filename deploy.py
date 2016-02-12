@@ -38,8 +38,10 @@ class Deployer(object):
     def build(self, environment='develop'):
         """Build the image"""
         print("Building... ", end="")
-        output = self.run('docker build -t %s %s' % (self.full_name(environment=environment), working_dir))
-        print("OK")
+        output = self.run('docker build -t %s %s' % (self.full_name(environment=environment), working_dir)).split('\n')
+        num_steps = len(filter(lambda x: "Step" in x, output)) - 1
+        num_cached = len(filter(lambda y: "cache" in y, output))
+        print("OK, %i steps, %i cached" % (num_steps, num_cached))
 
     def stop(self):
         """Stop a previously running development server"""
