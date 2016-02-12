@@ -1,36 +1,42 @@
+#!/usr/bin/env python
 from __future__ import print_function
+from subprocess import check_output
 
 import sys
 
 
 class Deployer(object):
-
-    local_repository_name = '***REMOVED***'
-    local_image_name = 'fizz'
-    testing_repository_name = '***REMOVED***/***REMOVED***/***REMOVED***'
+    image_name = 'fizz'
+    repository_name = {
+        'develop': '***REMOVED***',
+        'stage': '***REMOVED***/***REMOVED***/***REMOVED***',
+        'live': 'omsn',
+    }
 
     def __init__(self):
         # todo: init with config
         pass
 
-
-    def __dir__(self):
+    @staticmethod
+    def __dir__():
         return ['build', 'develop', 'tag', 'test', 'stage', 'deploy']
 
+    def full_name(self, environment='develop'):
+        # environemnt should be 'develop', 'stage', or 'live'
+        return "%s:%s" % (self.repository_name[environment], self.image_name)
 
-    def build(self):
+    def build(self, environment='develop'):
         """Build the image"""
-        # todo
-        # docker build -t ***REMOVED***/fizz .
-        pass
-
+        print("Building... ", end="")
+        output = check_output(['docker', 'build', '-t', self.full_name(environment=environment), '.'])
+        print("OK")
 
     def develop(self):
         """Run dev server"""
         self.build()
         # todo
-        # docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD=123123 --env SECRET_KEY=abcabcabca -v (pwd):/code ***REMOVED***/fizz
-
+        # docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD=123123
+        # --env SECRET_KEY=abcabcabca -v (pwd):/code ***REMOVED***/fizz
 
     def tag(self):
         """Tag git version and docker version"""
@@ -39,12 +45,10 @@ class Deployer(object):
         # git tag
         # docker tag -f ***REMOVED***/fizz:latest ***REMOVED***/***REMOVED***/***REMOVED***:latest
 
-
     def test(self):
         """Build and run Unit Tests"""
         self.build()
         # todo
-
 
     def stage(self):
         """Deploy on test servers"""
@@ -54,7 +58,6 @@ class Deployer(object):
         # docker push ***REMOVED***/***REMOVED***/***REMOVED***:latest
         # tell newrelic a deployment is happening
         # tell tutum to reload/redeploy
-
 
     def deploy(self):
         """Deploy on live servers"""
@@ -69,7 +72,7 @@ if __name__ == '__main__':
     d = Deployer()
 
     if len(sys.argv) > 1 and sys.argv[1] in dir(d):
-        getattr(d, sys.argv[1])
+        getattr(d, sys.argv[1])()
     else:
         print("USAGE:")
         print("\t%s %s\n" % (sys.argv[0], dir(d)))
