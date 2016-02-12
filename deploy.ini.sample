@@ -1,0 +1,13 @@
+[general]
+DOCKER_IMAGE_NAME = fizz
+ROOT_PASSWORD = root
+
+[develop]
+REPOSITORY_NAME = ***REMOVED***
+
+[staging]
+REPOSITORY_NAME = ***REMOVED***/***REMOVED***
+
+[production]
+SECRET_KEY = putsomethingreallylonghere
+REPOSITORY_NAME = 

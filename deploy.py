@@ -3,26 +3,16 @@ from __future__ import print_function
 
 import os
 import sys
+from ConfigParser import SafeConfigParser
 from subprocess import call, check_output, CalledProcessError
 
 working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
+
 class Deployer(object):
-    image_name = 'fizz'
-    repository_name = {
-        'develop': '***REMOVED***',
-        'stage': '***REMOVED***/***REMOVED***/***REMOVED***',
-        'live': 'omsn',
-    }
-
-    configuration = {
-        'root_password': '123123',
-        'secret_key': 'abcba',
-    }
-
-    def __init__(self):
-        # todo: init with config
-        pass
+    def __init__(self, config_file_path = os.path.join(working_dir, 'deploy.ini')):
+        self.parser = SafeConfigParser()
+        self.parser.read(config_file_path)
 
     @staticmethod
     def __dir__():
@@ -38,12 +28,12 @@ class Deployer(object):
 
     def get_container_id(self):
         """Returns the currently running container's ID if any"""
-        container_id = self.run('docker ps -q --filter="ancestor=%s:%s"' % (self.repository_name['develop'], self.image_name)).split('\n')[0]
+        container_id = self.run('docker ps -q --filter="ancestor=%s:%s"' % (self.parser.get('develop', 'REPOSITORY_NAME'), self.parser.get('general', 'DOCKER_IMAGE_NAME'))).split('\n')[0]
         return container_id
 
     def full_name(self, environment='develop'):
-        # environment should be 'develop', 'stage', or 'live'
-        return "%s:%s" % (self.repository_name[environment], self.image_name)
+        # environment should be 'develop', 'staging', or 'production'
+        return "%s:%s" % (self.parser.get(environment, 'REPOSITORY_NAME'), self.parser.get('general', 'DOCKER_IMAGE_NAME'))
 
     def build(self, environment='develop'):
         """Build the image"""
@@ -54,7 +44,7 @@ class Deployer(object):
     def stop(self):
         """Stop a previously running development server"""
         print("Stopping previously started containers... ", end="")
-        container_ids = self.run('docker ps -q --filter="ancestor=%s:%s"' % (self.repository_name['develop'], self.image_name)).split("\n")
+        container_ids = self.run('docker ps -q --filter="ancestor=%s:%s"' % (self.parser.get('develop', 'REPOSITORY_NAME'), self.parser.get('general', 'DOCKER_IMAGE_NAME'))).split("\n")
         for container_id in container_ids:
             if len(container_id) > 0:
                 print(container_id + ' ', end='')
@@ -66,7 +56,7 @@ class Deployer(object):
         self.build()
         self.stop()
         print("Starting dev server... ", end="")
-        output = self.run('docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD=' + self.configuration['root_password'] + ' --env SECRET_KEY=' + self.configuration['secret_key'] + ' -v ' + working_dir+':/code ' + self.full_name(environment='develop'))
+        output = self.run('docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD=' + self.parser.get('general', 'ROOT_PASSWORD') + ' --env SECRET_KEY=' + self.parser.get('production', 'SECRET_KEY') + ' -v ' + working_dir+':/code ' + self.full_name(environment='develop'))
         print("OK")
 
     def reload(self):
@@ -102,7 +92,7 @@ class Deployer(object):
         # tell tutum to reload/redeploy
 
     def deploy(self):
-        """Deploy on live servers"""
+        """Deploy on production servers"""
         self.build()
         # todo
         # tag?
