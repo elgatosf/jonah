@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sys
 
 
@@ -25,14 +27,14 @@ class Deployer(object):
 
     def develop(self):
         """Run dev server"""
-        build()
+        self.build()
         # todo
         # docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD=123123 --env SECRET_KEY=abcabcabca -v (pwd):/code ***REMOVED***/fizz
 
 
     def tag(self):
         """Tag git version and docker version"""
-        build()
+        self.build()
         # todo
         # git tag
         # docker tag -f ***REMOVED***/fizz:latest ***REMOVED***/***REMOVED***/***REMOVED***:latest
@@ -40,14 +42,14 @@ class Deployer(object):
 
     def test(self):
         """Build and run Unit Tests"""
-        build()
+        self.build()
         # todo
 
 
     def stage(self):
         """Deploy on test servers"""
-        build()
-        tag()
+        self.build()
+        self.tag()
         # todo
         # docker push ***REMOVED***/***REMOVED***/***REMOVED***:latest
         # tell newrelic a deployment is happening
@@ -56,7 +58,7 @@ class Deployer(object):
 
     def deploy(self):
         """Deploy on live servers"""
-        build()
+        self.build()
         # todo
         # tag?
         # docker push
@@ -70,5 +72,7 @@ if __name__ == '__main__':
         getattr(d, sys.argv[1])
     else:
         print("USAGE:")
-        print("\t%s %s" % (sys.argv[0], dir(d)))
+        print("\t%s %s\n" % (sys.argv[0], dir(d)))
+        for arg in dir(d):
+            print("\t" + arg + "\t" + getattr(d, arg).__doc__)
         exit(0)
