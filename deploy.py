@@ -39,11 +39,11 @@ class Deployer(object):
         # environment should be 'develop', 'staging', or 'production'
         return "%s/%s" % (self.parser.get(environment, 'REPOSITORY_NAME'), self.parser.get('general', 'DOCKER_IMAGE_NAME'))
 
-    def build(self, environment='develop'):
+    def build(self):
         """Build the image"""
         self.stop()
         print("Building... ", end="")
-        output = self.run('docker build -t %s %s' % (self.full_name(environment=environment), working_dir)).split('\n')
+        output = self.run('docker build -t %s %s' % (self.full_name(environment='develop'), working_dir)).split('\n')
         num_steps = len(filter(lambda x: "Step" in x, output)) - 1
         num_cached = len(filter(lambda y: "cache" in y, output))
         print("OK, %i steps, %i cached" % (num_steps, num_cached))
@@ -89,7 +89,7 @@ class Deployer(object):
             new_tag = 'latest'
         print("Tagging as '%s'... " % new_tag, end="")
         self.run('git tag -f ' + new_tag)
-        self.run('docker tag -f %s:latest %s:%s' % (self.full_name(environment='develop'), self.full_name(environment='staging'), new_tag))
+        self.run('docker tag -f %s:latest %s:%s' % (self.full_name(environment='develop'), self.parser.get('staging', 'REPOSITORY_NAME'), new_tag))
         print("OK")
         return new_tag
 
@@ -116,12 +116,12 @@ class Deployer(object):
 
         print("OK")
 
-    def notify_tutum(self, environment):
+    def notify_tutum(self, environment='staging'):
         print("Notifying Docker Cloud... ", end="")
-        # todo
-        # tell tutum to reload/redeploy
-        print("NIY")
-        pass
+        sys.stdout.flush()
+        redeploy_trigger_url = self.parser.get(environment, 'REDEPLOY_TRIGGER')
+        requests.post(redeploy_trigger_url)
+        print("OK")
 
     def stage(self):
         """Deploy on test servers"""
