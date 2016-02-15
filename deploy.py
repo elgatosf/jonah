@@ -21,7 +21,8 @@ class Deployer(object):
     @staticmethod
     def run(cmd, cwd=None):
         try:
-            print(cmd)
+            if os.getenv("DEBUG", "False") == "True":
+                print(cmd)
             return check_output(cmd.split(' '), cwd=working_dir if cwd is None else cwd)
         except CalledProcessError as e:
             print('Error\n\t' + e.output)
@@ -73,40 +74,56 @@ class Deployer(object):
         cmd = 'docker exec -t -i %s /bin/bash' % self.get_container_id().split(' ')[0]
         call(cmd, shell=True)
 
-    def tag(self):
+    def tag(self, tag=None):
         """Tag git version and docker version"""
         self.build()
-        print("Tagging...")
         current_tag = self.run('git describe --tags').split('\n')[0]
-        new_tag = raw_input("Which tag should I use? (Current is %s, leave empty for staging tag): " % current_tag)
+        if tag:
+            new_tag = tag
+        else:
+            new_tag = raw_input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
 
+        print("Tagging as '%s'... " % new_tag, end="")
         if len(new_tag) < 1:
-            new_tag = 'staging'
+            new_tag = 'latest'
         self.run('git tag -f ' + new_tag)
         self.run('docker tag -f %s:latest %s:%s' % (self.full_name(environment='develop'), self.full_name(environment='staging'), new_tag))
+        print("OK")
 
     def test(self):
         """Build and run Unit Tests"""
         self.build()
         # todo
 
+    def push(self, repo_name):
+        print("Pushing to '%s'... " % repo_name, end="")
+        self.run('docker push ' + repo_name)
+        print("OK")
+
+    def notify_newrelic(self, environment):
+        print("Notifying New Relic... ", end="")
+        # todo
+        # tell newrelic a deployment is happening
+        print("NIY")
+        pass
+
+    def notify_tutum(self, environment):
+        print("Notifying Docker Cloud... ", end="")
+        # todo
+        # tell tutum to reload/redeploy
+        print("NIY")
+        pass
+
     def stage(self):
         """Deploy on test servers"""
-        self.build()
-        self.tag()
-        # todo
-        # docker push ***REMOVED***/***REMOVED***/***REMOVED***:latest
-        # tell newrelic a deployment is happening
-        # tell tutum to reload/redeploy
+        self.deploy(environment='staging')
 
-    def deploy(self):
-        """Deploy on production servers"""
-        self.build()
-        # todo
-        # tag?
-        # docker push
-        # tell newrelic a deployment is happening
-        # tell tutum to reload/redeploy
+    def deploy(self, environment='production'):
+        self.tag(tag='latest' if environment=='staging' else None)
+        repo_name = self.parser.get(environment, 'REPOSITORY_NAME') + ":latest"
+        self.push(repo_name)
+        self.notify_newrelic('staging')
+        self.notify_tutum('staging')
 
 if __name__ == '__main__':
     d = Deployer()
