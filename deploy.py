@@ -21,6 +21,7 @@ class Deployer(object):
     @staticmethod
     def run(cmd):
         try:
+            # print(cmd)
             return check_output(cmd.split(' '))
         except CalledProcessError as e:
             print('Error\n\t' + e.output)
@@ -55,8 +56,8 @@ class Deployer(object):
 
     def develop(self):
         """Run dev server"""
-        self.build()
         self.stop()
+        self.build()
         print("Starting dev server... ", end="")
         output = self.run('docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD=' + self.parser.get('general', 'ROOT_PASSWORD') + ' --env SECRET_KEY=' + self.parser.get('production', 'SECRET_KEY') + ' -v ' + working_dir+':/code ' + self.full_name(environment='develop'))
         print("OK")
