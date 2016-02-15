@@ -19,10 +19,10 @@ class Deployer(object):
         return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy']
 
     @staticmethod
-    def run(cmd):
+    def run(cmd, cwd=None):
         try:
-            # print(cmd)
-            return check_output(cmd.split(' '))
+            print(cmd)
+            return check_output(cmd.split(' '), cwd=working_dir if cwd is None else cwd)
         except CalledProcessError as e:
             print('Error\n\t' + e.output)
             exit(1)
@@ -34,7 +34,7 @@ class Deployer(object):
 
     def full_name(self, environment='develop'):
         # environment should be 'develop', 'staging', or 'production'
-        return "%s:%s" % (self.parser.get(environment, 'REPOSITORY_NAME'), self.parser.get('general', 'DOCKER_IMAGE_NAME'))
+        return "%s/%s" % (self.parser.get(environment, 'REPOSITORY_NAME'), self.parser.get('general', 'DOCKER_IMAGE_NAME'))
 
     def build(self, environment='develop'):
         """Build the image"""
