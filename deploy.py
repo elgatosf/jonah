@@ -83,12 +83,13 @@ class Deployer(object):
         else:
             new_tag = raw_input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
 
-        print("Tagging as '%s'... " % new_tag, end="")
-        if len(new_tag) < 1:
+        if len(new_tag) < 1 or new_tag == "\n":
             new_tag = 'latest'
+        print("Tagging as '%s'... " % new_tag, end="")
         self.run('git tag -f ' + new_tag)
         self.run('docker tag -f %s:latest %s:%s' % (self.full_name(environment='develop'), self.full_name(environment='staging'), new_tag))
         print("OK")
+        return new_tag
 
     def test(self):
         """Build and run Unit Tests"""
@@ -119,8 +120,9 @@ class Deployer(object):
         self.deploy(environment='staging')
 
     def deploy(self, environment='production'):
-        self.tag(tag='latest' if environment=='staging' else None)
-        repo_name = self.parser.get(environment, 'REPOSITORY_NAME') + ":latest"
+        tag = 'latest' if environment=='staging' else None
+        tag = self.tag(tag=tag)
+        repo_name = self.parser.get(environment, 'REPOSITORY_NAME') + ":" + tag
         self.push(repo_name)
         self.notify_newrelic('staging')
         self.notify_tutum('staging')
