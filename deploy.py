@@ -6,6 +6,8 @@ import sys
 from ConfigParser import SafeConfigParser
 from subprocess import call, check_output, CalledProcessError
 
+import requests
+
 working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 
@@ -16,7 +18,7 @@ class Deployer(object):
 
     @staticmethod
     def __dir__():
-        return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy']
+        return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy', 'notify_newrelic']
 
     @staticmethod
     def run(cmd, cwd=None):
@@ -101,12 +103,18 @@ class Deployer(object):
         self.run('docker push ' + repo_name)
         print("OK")
 
-    def notify_newrelic(self, environment):
+    def notify_newrelic(self):
         print("Notifying New Relic... ", end="")
-        # todo
-        # tell newrelic a deployment is happening
-        print("NIY")
-        pass
+        sys.stdout.flush()
+        post_headers = {
+            'x-api-key': self.parser.get('general', 'NEW_RELIC_API_KEY')
+        }
+        post_data = {
+            'deployment[app_name]': self.parser.get('general', 'NEW_RELIC_APP_NAME')
+        }
+        requests.post('https://api.newrelic.com/deployments.xml', data=post_data, headers=post_headers)
+
+        print("OK")
 
     def notify_tutum(self, environment):
         print("Notifying Docker Cloud... ", end="")
@@ -124,7 +132,7 @@ class Deployer(object):
         tag = self.tag(tag=tag)
         repo_name = self.parser.get(environment, 'REPOSITORY_NAME') + ":" + tag
         self.push(repo_name)
-        self.notify_newrelic('staging')
+        self.notify_newrelic()
         self.notify_tutum('staging')
 
 if __name__ == '__main__':
