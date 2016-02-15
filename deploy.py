@@ -18,7 +18,7 @@ class Deployer(object):
 
     @staticmethod
     def __dir__():
-        return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy', 'notify_newrelic']
+        return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy']
 
     @staticmethod
     def run(cmd, cwd=None):
@@ -128,7 +128,7 @@ class Deployer(object):
         self.deploy(environment='staging')
 
     def deploy(self, environment='production'):
-        tag = 'latest' if environment=='staging' else None
+        tag = 'latest' if environment == 'staging' else None
         tag = self.tag(tag=tag)
         repo_name = self.parser.get(environment, 'REPOSITORY_NAME') + ":" + tag
         self.push(repo_name)
