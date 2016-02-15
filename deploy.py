@@ -38,6 +38,7 @@ class Deployer(object):
 
     def build(self, environment='develop'):
         """Build the image"""
+        self.stop()
         print("Building... ", end="")
         output = self.run('docker build -t %s %s' % (self.full_name(environment=environment), working_dir)).split('\n')
         num_steps = len(filter(lambda x: "Step" in x, output)) - 1
@@ -56,7 +57,6 @@ class Deployer(object):
 
     def develop(self):
         """Run dev server"""
-        self.stop()
         self.build()
         print("Starting dev server... ", end="")
         output = self.run('docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD=' + self.parser.get('general', 'ROOT_PASSWORD') + ' --env SECRET_KEY=' + self.parser.get('production', 'SECRET_KEY') + ' -v ' + working_dir+':/code ' + self.full_name(environment='develop'))
