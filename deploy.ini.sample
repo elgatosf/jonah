@@ -1,13 +1,16 @@
 [general]
 DOCKER_IMAGE_NAME = fizz
 ROOT_PASSWORD = root
+NEW_RELIC_API_KEY = (for deployment notification)
+NEW_RELIC_APP_NAME = (for deployment notification)
 
 [develop]
 REPOSITORY_NAME = ***REMOVED***
 
 [staging]
-REPOSITORY_NAME = ***REMOVED***/***REMOVED***
+REPOSITORY_NAME = ***REMOVED***/***REMOVED***/***REMOVED***
+REDEPLOY_TRIGGER = https://dashboard.***REMOVED***/api/v1/service/***REMOVED***
 
 [production]
 SECRET_KEY = putsomethingreallylonghere
-REPOSITORY_NAME = 
+REPOSITORY_NAME =
