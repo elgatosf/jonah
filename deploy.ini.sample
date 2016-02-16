@@ -1,6 +1,6 @@
 [general]
 DOCKER_IMAGE_NAME = fizz
-ROOT_PASSWORD = root
+ROOT_PASSWORD = 123123
 NEW_RELIC_API_KEY = (for deployment notification)
 NEW_RELIC_APP_NAME = (for deployment notification)
 

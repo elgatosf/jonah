@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
 RUN easy_install pip
 RUN apt-get build-dep -y python-psycopg2
 
+# Add non-privileged user for processes that don't want to run as root
+RUN adduser --disabled-password --gecos '' r
+
 # Handle urllib3 InsecurePlatformWarning
 RUN apt-get install -y libffi-dev libssl-dev libpython2.7-dev
 RUN pip install requests[security] ndg-httpsclient pyasn1 newrelic gunicorn
