@@ -47,7 +47,7 @@ RUN rm /etc/nginx/sites-enabled/default
 # Enable production settings by default; for development, this can be set to
 # `false` in `docker run --env`
 ENV DJANGO_PRODUCTION=true
-ENV NEW_RELIC_LICENSE_KEY=***REMOVED***
+ENV NEW_RELIC_LICENSE_KEY=invalid
 ENV NEW_RELIC_APP_NAME=Developer
 ENV NEW_RELIC_CONFIG_FILE=/deployment/newrelic.ini
 ENV NEW_RELIC_ENVIRONMENT=development

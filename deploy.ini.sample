@@ -1,16 +1,16 @@
 [general]
-DOCKER_IMAGE_NAME = fizz
-ROOT_PASSWORD = 123123
-NEW_RELIC_API_KEY = (for deployment notification)
-NEW_RELIC_APP_NAME = (for deployment notification)
+NEW_RELIC_APP_NAME = My Amazing App
+NEW_RELIC_API_KEY = abcabcabc
 
 [develop]
-REPOSITORY_NAME = ***REMOVED***
+DOCKER_IMAGE_NAME = ***REMOVED***/whatever
+ROOT_PASSWORD = 123123
+SECRET_KEY = abcabc
 
 [staging]
-REPOSITORY_NAME = ***REMOVED***/***REMOVED***/***REMOVED***
-REDEPLOY_TRIGGER = https://dashboard.***REMOVED***/api/v1/service/***REMOVED***
+DOCKER_IMAGE_NAME = ***REMOVED***/***REMOVED***-whatever
+REDEPLOY_TRIGGER = https://***REMOVED***/api/app/v1/service/***REMOVED***
 
 [production]
-SECRET_KEY = putsomethingreallylonghere
-REPOSITORY_NAME =
+DOCKER_IMAGE_NAME = ***REMOVED***/***REMOVED***-whatever
+# no redeploy trigger, we want to redeploy manually

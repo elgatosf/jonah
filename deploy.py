@@ -3,12 +3,26 @@ from __future__ import print_function
 
 import os
 import sys
-from ConfigParser import SafeConfigParser
+from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 from subprocess import call, check_output, CalledProcessError
 
 import requests
 
 working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+# environment names
+general = 'general'
+develop = 'develop'
+staging = 'staging'
+production = 'production'
+
+# configuration names
+NEW_RELIC_APP_NAME = 'NEW_RELIC_APP_NAME'
+NEW_RELIC_API_KEY = 'NEW_RELIC_API_KEY'
+DOCKER_IMAGE_NAME = 'DOCKER_IMAGE_NAME'
+REDEPLOY_TRIGGER = 'REDEPLOY_TRIGGER'
+ROOT_PASSWORD = 'ROOT_PASSWORD'
+SECRET_KEY = 'SECRET_KEY'
 
 
 class Deployer(object):
@@ -22,6 +36,7 @@ class Deployer(object):
 
     @staticmethod
     def run(cmd, cwd=None):
+        """Run a shell command"""
         try:
             if os.getenv("DEBUG", "False") == "True":
                 print(cmd)
@@ -30,20 +45,26 @@ class Deployer(object):
             print('Error\n\t' + e.output)
             exit(1)
 
+    def get_configuration(self, configuration_name, environment='general'):
+        try:
+            return self.parser.get(environment, configuration_name)
+        except (NoSectionError, NoOptionError):
+            return self.parser.get('general', configuration_name)
+
     def get_container_id(self):
         """Returns the currently running container's ID if any"""
-        container_id = self.run('docker ps -q --filter="ancestor=%s:%s"' % (self.parser.get('develop', 'REPOSITORY_NAME'), self.parser.get('general', 'DOCKER_IMAGE_NAME'))).split('\n')[0]
+        container_id = self.run('docker ps -q --filter="ancestor=%s"' % (self.get_configuration('DOCKER_IMAGE_NAME', 'develop').replace('/', ':'))).split('\n')[0]
         return container_id
 
-    def full_name(self, environment='develop'):
+    def full_name(self, environment):
         # environment should be 'develop', 'staging', or 'production'
-        return "%s/%s" % (self.parser.get(environment, 'REPOSITORY_NAME'), self.parser.get('general', 'DOCKER_IMAGE_NAME'))
+        return self.get_configuration('DOCKER_IMAGE_NAME', environment)
 
-    def build(self):
+    def build(self, environment=develop):
         """Build the image"""
         self.stop()
         print("Building... ", end="")
-        output = self.run('docker build -t %s %s' % (self.full_name(environment='develop'), working_dir)).split('\n')
+        output = self.run('docker build -t %s %s' % (self.full_name(environment=environment), working_dir)).split('\n')
         num_steps = len(filter(lambda x: "Step" in x, output)) - 1
         num_cached = len(filter(lambda y: "cache" in y, output))
         print("OK, %i steps, %i cached" % (num_steps, num_cached))
@@ -51,7 +72,8 @@ class Deployer(object):
     def stop(self):
         """Stop a previously running development server"""
         print("Stopping previously started containers... ", end="")
-        container_ids = self.run('docker ps -q --filter="ancestor=%s:%s"' % (self.parser.get('develop', 'REPOSITORY_NAME'), self.parser.get('general', 'DOCKER_IMAGE_NAME'))).split("\n")
+        image_name = self.get_configuration(DOCKER_IMAGE_NAME, develop).replace('/', ':')
+        container_ids = self.run('docker ps -q --filter="ancestor=%s"' % image_name).split("\n")
         for container_id in container_ids:
             if len(container_id) > 0:
                 print(container_id + ' ', end='')
@@ -60,9 +82,12 @@ class Deployer(object):
 
     def develop(self):
         """Run dev server"""
-        self.build()
+        self.build(develop)
         print("Starting dev server... ", end="")
-        output = self.run('docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD=' + self.parser.get('general', 'ROOT_PASSWORD') + ' --env SECRET_KEY=' + self.parser.get('production', 'SECRET_KEY') + ' -v ' + working_dir+':/code ' + self.full_name(environment='develop'))
+        output = self.run('docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD='
+                          + self.get_configuration(ROOT_PASSWORD, develop)
+                          + ' --env SECRET_KEY=' + self.get_configuration(SECRET_KEY, develop)
+                          + ' -v ' + working_dir+':/code ' + self.full_name(environment=develop))
         print("OK")
 
     def reload(self):
@@ -76,7 +101,7 @@ class Deployer(object):
         cmd = 'docker exec -t -i %s /bin/bash' % self.get_container_id().split(' ')[0]
         call(cmd, shell=True)
 
-    def tag(self, tag=None):
+    def tag(self, environment, tag=None):
         """Tag git version and docker version"""
         self.build()
         current_tag = self.run('git describe --tags').split('\n')[0]
@@ -88,8 +113,9 @@ class Deployer(object):
         if len(new_tag) < 1 or new_tag == "\n":
             new_tag = 'latest'
         print("Tagging as '%s'... " % new_tag, end="")
+
         self.run('git tag -f ' + new_tag)
-        self.run('docker tag -f %s:latest %s:%s' % (self.full_name(environment='develop'), self.parser.get('staging', 'REPOSITORY_NAME'), new_tag))
+        self.run('docker tag -f %s:latest %s:%s' % (self.full_name(environment=develop), self.full_name(environment=environment), new_tag))
         print("OK")
         return new_tag
 
@@ -98,42 +124,43 @@ class Deployer(object):
         self.build()
         # todo
 
-    def push(self, repo_name):
+    def push(self, environment):
+        repo_name = self.get_configuration(DOCKER_IMAGE_NAME, environment)
         print("Pushing to '%s'... " % repo_name, end="")
         self.run('docker push ' + repo_name)
         print("OK")
 
-    def notify_newrelic(self):
-        print("Notifying New Relic... ", end="")
+    def notify_newrelic(self, environment):
+        print("Notifying New Relic (%s)... " % environment, end="")
         sys.stdout.flush()
         post_headers = {
-            'x-api-key': self.parser.get('general', 'NEW_RELIC_API_KEY')
+            'x-api-key': self.get_configuration(NEW_RELIC_API_KEY, environment)
         }
         post_data = {
-            'deployment[app_name]': self.parser.get('general', 'NEW_RELIC_APP_NAME')
+            'deployment[app_name]': self.get_configuration(NEW_RELIC_APP_NAME, environment)
         }
         requests.post('https://api.newrelic.com/deployments.xml', data=post_data, headers=post_headers)
 
         print("OK")
 
-    def notify_tutum(self, environment='staging'):
-        print("Notifying Docker Cloud... ", end="")
+    def notify_docker_cloud(self, environment):
+        print("Notifying Docker Cloud to redeploy %s... " % environment, end="")
         sys.stdout.flush()
-        redeploy_trigger_url = self.parser.get(environment, 'REDEPLOY_TRIGGER')
-        requests.post(redeploy_trigger_url)
+        requests.post(self.get_configuration(REDEPLOY_TRIGGER, environment))
         print("OK")
 
     def stage(self):
         """Deploy on test servers"""
-        self.deploy(environment='staging')
+        self.deploy(environment=staging)
 
-    def deploy(self, environment='production'):
-        tag = 'latest' if environment == 'staging' else None
-        tag = self.tag(tag=tag)
-        repo_name = self.parser.get(environment, 'REPOSITORY_NAME') + ":" + tag
-        self.push(repo_name)
-        self.notify_newrelic()
-        self.notify_tutum('staging')
+    def deploy(self, environment=production):
+        """Deploy on production servers"""
+        tag = 'latest' if environment == staging else None
+        tag = self.tag(environment, tag=tag)
+        repo_name = self.get_configuration(DOCKER_IMAGE_NAME, environment)
+        self.push(environment)
+        self.notify_newrelic(environment)
+        self.notify_docker_cloud('staging')
 
 if __name__ == '__main__':
     d = Deployer()
