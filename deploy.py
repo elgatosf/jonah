@@ -32,7 +32,7 @@ class Deployer(object):
 
     @staticmethod
     def __dir__():
-        return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy']
+        return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage']
 
     @staticmethod
     def run(cmd, cwd=None):
