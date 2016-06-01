@@ -98,7 +98,11 @@ class Deployer(object):
 
     def shell(self):
         """Get a shell on the dev server"""
-        cmd = 'docker exec -t -i %s /bin/bash' % self.get_container_id().split(' ')[0]
+        container_id = self.get_container_id()
+        if len(container_id) < 1:
+            self.develop()
+            container_id = self.get_container_id()
+        cmd = 'docker exec -t -i %s /bin/bash' % container_id.split(' ')[0]
         call(cmd, shell=True)
 
     def tag(self, environment, tag=None):
