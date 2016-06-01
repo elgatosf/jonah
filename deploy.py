@@ -123,10 +123,10 @@ class Deployer(object):
         """Build and run Unit Tests"""
         self.build()
         print("Running Tests... ", end="")
-        self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret '
-             + self.full_name(environment=develop)
-             + ' python ddp/manage.py test')
-
+        self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret'
+            + ' -w="/code/ddp/" '
+            + self.full_name(environment=develop)
+            + ' python manage.py test')
 
     def push(self, environment):
         repo_name = self.get_configuration(DOCKER_IMAGE_NAME, environment)
