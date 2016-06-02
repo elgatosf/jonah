@@ -35,7 +35,8 @@ class Deployer(object):
         self.parser.read(config_file_path)
 
         # connect to the docker machine if necessary
-        self.run('eval "$(docker-machine env default)"')
+        docker_conf = check_output(['docker-machine', 'env', 'default'])
+        self.run(docker_conf)
 
     @staticmethod
     def __dir__():
