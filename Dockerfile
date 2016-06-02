@@ -12,7 +12,9 @@ RUN apt-get update && apt-get install -y \
     python-urllib3 \
     supervisor \
     vim \
-    psmisc
+    psmisc \
+    libxml2-dev \
+    libxslt1-dev
 RUN easy_install pip
 RUN apt-get build-dep -y python-psycopg2
 
