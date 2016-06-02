@@ -6,7 +6,11 @@ import sys
 from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 from subprocess import call, check_output, CalledProcessError
 
-import requests
+# requests might now be available. Don't run the "deploy" command in this case
+try:
+    import requests
+except ImportError:
+    pass
 
 working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
