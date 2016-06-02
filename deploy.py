@@ -34,6 +34,9 @@ class Deployer(object):
         self.parser = SafeConfigParser()
         self.parser.read(config_file_path)
 
+        # connect to the docker machine if necessary
+        self.run('eval "$(docker-machine env default)"')
+
     @staticmethod
     def __dir__():
         return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy']
