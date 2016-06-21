@@ -3,8 +3,15 @@ from __future__ import print_function
 
 import os
 import sys
-from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
+
+if sys.version_info >= (3, 0):
+    from configparser import SafeConfigParser, NoSectionError, NoOptionError
+else:
+    from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
+
 from subprocess import call, check_output, CalledProcessError
+if sys.version_info >= (3, 0):
+    from subprocess import getoutput
 
 # requests might now be available. Don't run the "deploy" command in this case
 try:
@@ -44,10 +51,20 @@ class Deployer(object):
         try:
             if os.getenv("DEBUG", "False") == "True":
                 print(cmd)
-            return check_output(cmd.split(' '), cwd=working_dir if cwd is None else cwd)
+            if sys.version_info >= (3, 0):
+                return getoutput(cmd)
+            else:
+                return check_output(cmd.split(' '), cwd=working_dir if cwd is None else cwd)
         except CalledProcessError as e:
             print('Error\n\t' + e.output)
             exit(1)
+
+    @staticmethod
+    def printout(text, add_newline=True):
+        if sys.version_info >= (3, 0):
+            print(text, end="\n" if add_newline else "", flush=True)
+        else:
+            print(text, end="\n" if add_newline else "")
 
     def get_configuration(self, configuration_name, environment='general'):
         try:
@@ -67,38 +84,38 @@ class Deployer(object):
     def build(self, environment=develop):
         """Build the image"""
         self.stop()
-        print("Building... ", end="")
+        self.printout("Building... ", False)
         output = self.run('docker build -t %s %s' % (self.full_name(environment=environment), working_dir)).split('\n')
-        num_steps = len(filter(lambda x: "Step" in x, output)) - 1
-        num_cached = len(filter(lambda y: "cache" in y, output))
-        print("OK, %i steps, %i cached" % (num_steps, num_cached))
+        num_steps = len(list(filter(lambda x: "Step" in x, output))) - 1
+        num_cached = len(list(filter(lambda y: "cache" in y, output)))
+        self.printout("OK, %i steps, %i cached" % (num_steps, num_cached))
 
     def stop(self):
         """Stop a previously running development server"""
-        print("Stopping previously started containers... ", end="")
-        image_name = self.get_configuration(DOCKER_IMAGE_NAME, develop).replace('/', ':')
+        self.printout("Stopping previously started containers... ", False)
+        image_name = self.get_configuration(DOCKER_IMAGE_NAME, develop)
         container_ids = self.run('docker ps -q --filter="ancestor=%s"' % image_name).split("\n")
         for container_id in container_ids:
             if len(container_id) > 0:
-                print(container_id + ' ', end='')
+                self.printout(container_id + ' ', False)
                 self.run('docker stop ' + container_id)
-        print("OK")
+        self.printout("OK")
 
     def develop(self):
         """Run dev server"""
         self.build(develop)
-        print("Starting dev server... ", end="")
+        self.printout("Starting dev server... ", False)
         output = self.run('docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD='
                           + self.get_configuration(ROOT_PASSWORD, develop)
                           + ' --env SECRET_KEY=' + self.get_configuration(SECRET_KEY, develop)
                           + ' -v ' + working_dir+':/code ' + self.full_name(environment=develop))
-        print("OK")
+        self.printout("OK")
 
     def reload(self):
         """Reload Django process on dev server"""
-        print("Reloading Django... ", end='')
+        self.printout("Reloading Django... ", False)
         self.run('docker exec -t -i %s killall gunicorn' % self.get_container_id())
-        print("OK")
+        self.printout("OK")
 
     def shell(self):
         """Get a shell on the dev server"""
@@ -116,15 +133,18 @@ class Deployer(object):
         if tag:
             new_tag = tag
         else:
-            new_tag = raw_input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
+            if sys.version_info >= (3, 0):
+                new_tag = input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
+            else:
+                new_tag = raw_input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
 
         if len(new_tag) < 1 or new_tag == "\n":
             new_tag = 'latest'
-        print("Tagging as '%s'... " % new_tag, end="")
+        self.printout("Tagging as '%s'... " % new_tag, False)
 
         self.run('git tag -f ' + new_tag)
         self.run('docker tag -f %s:latest %s:%s' % (self.full_name(environment=develop), self.full_name(environment=environment), new_tag))
-        print("OK")
+        self.printout("OK")
         return new_tag
 
     def test(self):
@@ -139,12 +159,12 @@ class Deployer(object):
 
     def push(self, environment):
         repo_name = self.get_configuration(DOCKER_IMAGE_NAME, environment)
-        print("Pushing to '%s'... " % repo_name, end="")
+        self.printout("Pushing to '%s'... " % repo_name, False)
         self.run('docker push ' + repo_name)
-        print("OK")
+        self.printout("OK")
 
     def notify_newrelic(self, environment):
-        print("Notifying New Relic (%s)... " % environment, end="")
+        self.printout("Notifying New Relic (%s)... " % environment, False)
         sys.stdout.flush()
         post_headers = {
             'x-api-key': self.get_configuration(NEW_RELIC_API_KEY, environment)
@@ -154,13 +174,13 @@ class Deployer(object):
         }
         requests.post('https://api.newrelic.com/deployments.xml', data=post_data, headers=post_headers)
 
-        print("OK")
+        self.printout("OK")
 
     def notify_docker_cloud(self, environment):
-        print("Notifying Docker Cloud to redeploy %s... " % environment, end="")
+        self.printout("Notifying Docker Cloud to redeploy %s... " % environment, False)
         sys.stdout.flush()
         requests.post(self.get_configuration(REDEPLOY_TRIGGER, environment))
-        print("OK")
+        self.printout("OK")
 
     def stage(self):
         """Deploy on test servers"""
