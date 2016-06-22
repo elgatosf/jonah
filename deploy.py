@@ -143,7 +143,7 @@ class Deployer(object):
         self.printout("Tagging as '%s'... " % new_tag, False)
 
         self.run('git tag -f ' + new_tag)
-        self.run('docker tag -f %s:latest %s:%s' % (self.full_name(environment=develop), self.full_name(environment=environment), new_tag))
+        self.run('docker tag %s:latest %s:%s' % (self.full_name(environment=develop), self.full_name(environment=environment), new_tag))
         self.printout("OK")
         return new_tag
 
