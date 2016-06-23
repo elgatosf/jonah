@@ -37,6 +37,8 @@ SECRET_KEY = 'SECRET_KEY'
 
 
 class Deployer(object):
+    debug_mode = False
+
     def __init__(self, config_file_path = os.path.join(working_dir, 'deploy.ini')):
         self.parser = SafeConfigParser()
         self.parser.read(config_file_path)
@@ -45,12 +47,12 @@ class Deployer(object):
     def __dir__():
         return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy']
 
-    @staticmethod
-    def run(cmd, cwd=None):
+    def run(self, cmd, cwd=None):
         """Run a shell command"""
         try:
-            if os.getenv("DEBUG", "False") == "True":
-                print(cmd)
+            if self.debug_mode:
+                print('\n> ' + cmd)
+                return ''
             if sys.version_info >= (3, 0):
                 return getoutput(cmd)
             else:
@@ -200,6 +202,8 @@ if __name__ == '__main__':
     d = Deployer()
 
     if len(sys.argv) > 1 and sys.argv[1] in dir(d):
+        if len(sys.argv) > 2 and sys.argv[2] == 'debug':
+            d.debug_mode = True
         getattr(d, sys.argv[1])()
     else:
         print("USAGE:")
