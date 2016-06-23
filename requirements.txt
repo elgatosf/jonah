@@ -7,6 +7,7 @@ pyasn1
 gunicorn
 
 # static files
+django-flat-theme
 django-storages~=1.4
 boto==2.39.0
 
