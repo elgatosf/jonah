@@ -23,9 +23,10 @@ RUN adduser --disabled-password --gecos '' r
 
 # Handle urllib3 InsecurePlatformWarning
 RUN apt-get install -y libffi-dev libssl-dev libpython2.7-dev
-RUN pip install requests[security] ndg-httpsclient pyasn1 newrelic gunicorn
 
 # Install Python Requirements
+ADD deployment/requirements.txt /deployrequirements.txt
+RUN pip install -r /deployrequirements.txt
 ADD requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 

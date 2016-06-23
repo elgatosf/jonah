@@ -1,0 +1,16 @@
+# Handle urllib3 InsecurePlatformWarning
+requests[security]
+ndg-httpsclient
+pyasn1
+
+# running the server
+gunicorn
+
+# monitoring
+newrelic
+raven
+
+# unit tests
+coverage
+unittest-xml-reporting
+cobertura-clover-transform
