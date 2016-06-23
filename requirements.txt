@@ -3,6 +3,12 @@ requests[security]
 ndg-httpsclient
 pyasn1
 
+# Django!
+django~=1.8.13
+djangorestframework~=3.2.1
+django-flat-theme
+psycopg2~=2.6.1
+
 # running the server
 gunicorn
 
