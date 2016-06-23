@@ -188,6 +188,7 @@ class Deployer(object):
 
     def deploy(self, environment=production):
         """Deploy on production servers"""
+        self.test()
         tag = 'latest' if environment == staging else None
         tag = self.tag(environment, tag=tag)
         repo_name = self.get_configuration(DOCKER_IMAGE_NAME, environment)
