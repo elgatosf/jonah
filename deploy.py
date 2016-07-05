@@ -154,7 +154,7 @@ class Deployer(object):
         self.build()
         print("Running Tests... ", end="")
         output = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret'
-            + ' -w="/code/ddp/" '
+            + ' -w=/code/ddp/ '
             + self.full_name(environment=develop)
             + ' ./test.sh')
         print(output)
