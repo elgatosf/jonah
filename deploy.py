@@ -45,7 +45,7 @@ class Deployer(object):
 
     @staticmethod
     def __dir__():
-        return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy']
+        return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy', 'clean']
 
     def run(self, cmd, cwd=None):
         """Run a shell command"""
@@ -197,6 +197,16 @@ class Deployer(object):
         self.push(environment)
         self.notify_newrelic(environment)
         self.notify_docker_cloud('staging')
+
+    def clean(self):
+        """Delete exited containers, dangling images, and volumes"""
+        self.printout("Deleting exited containers... ", False)
+        exited_containers = self.run("docker ps -a -q -f status=exited").split("\n")
+        for exited_container in exited_containers:
+            if len(exited_container) > 0:
+                self.printout(exited_container + ' ', False)
+                self.run("docker rm -v %s" % exited_container)
+        self.printout("OK")
 
 if __name__ == '__main__':
     d = Deployer()
