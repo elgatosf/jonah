@@ -208,6 +208,15 @@ class Deployer(object):
                 self.run("docker rm -v %s" % exited_container)
         self.printout("OK")
 
+        self.printout("Deleting dangling images... ", False)
+        dangling_images = self.run('docker images -f "dangling=true" -q').split("\n")
+        dangling_images.reverse()
+        for dangling_image in dangling_images:
+            if len(dangling_image) > 0:
+                self.printout(dangling_image + ' ', False)
+                self.run("docker rmi -f %s" % dangling_image)
+        self.printout("OK")
+
 if __name__ == '__main__':
     d = Deployer()
 
