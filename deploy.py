@@ -217,6 +217,16 @@ class Deployer(object):
                 self.run("docker rmi -f %s" % dangling_image)
         self.printout("OK")
 
+        self.printout("Deleting unused volumes... ", False)
+        dangling_volumes = self.run('docker volume ls -qf dangling=true').split("\n")
+        for dangling_volume in dangling_volumes:
+            if len(dangling_volume) > 0:
+                self.printout(dangling_volume + ' ', False)
+                self.run("docker volume rm %s" % dangling_volume)
+        self.printout("OK")
+
+
+
 if __name__ == '__main__':
     d = Deployer()
 
