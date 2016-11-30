@@ -45,7 +45,7 @@ class Deployer(object):
 
     @staticmethod
     def __dir__():
-        return ['build', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy', 'clean']
+        return ['build', 'cleanbuild', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy', 'clean']
 
     def run(self, cmd, cwd=None):
         """Run a shell command"""
@@ -83,14 +83,21 @@ class Deployer(object):
         # environment should be 'develop', 'staging', or 'production'
         return self.get_configuration('DOCKER_IMAGE_NAME', environment)
 
-    def build(self, environment=develop):
+    def build(self, environment=develop, clean=False):
         """Build the image"""
         self.stop()
         self.printout("Building... ", False)
-        output = self.run('docker build -t %s %s' % (self.full_name(environment=environment), working_dir)).split('\n')
+        run_command = 'docker build -t %s %s'
+        if clean:
+            run_command += ' --no-cache'
+        output = self.run(run_command % (self.full_name(environment=environment), working_dir)).split('\n')
         num_steps = len(list(filter(lambda x: "Step" in x, output))) - 1
         num_cached = len(list(filter(lambda y: "cache" in y, output)))
         self.printout("OK, %i steps, %i cached" % (num_steps, num_cached))
+
+    def cleanbuild(self, environment=develop):
+        """Build the image from scratch"""
+        self.build(environment=environment, clean=True)
 
     def stop(self):
         """Stop a previously running development server"""
