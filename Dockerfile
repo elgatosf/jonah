@@ -54,6 +54,7 @@ ENV NEW_RELIC_LICENSE_KEY=invalid
 ENV NEW_RELIC_APP_NAME=Developer
 ENV NEW_RELIC_CONFIG_FILE=/deployment/newrelic.ini
 ENV NEW_RELIC_ENVIRONMENT=development
+ENV DJANGO_SETTINGS_MODULE=ddp.settings
 
 # Configure Django project
 ADD . /code
