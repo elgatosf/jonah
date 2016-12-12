@@ -12,7 +12,10 @@ RUN apt-get update && apt-get install -y \
     python-urllib3 \
     supervisor \
     vim \
-    psmisc
+    psmisc \
+    libxml2-dev \
+    libxslt1-dev \
+    ipython
 RUN easy_install pip
 RUN apt-get build-dep -y python-psycopg2
 
@@ -48,6 +51,7 @@ ENV NEW_RELIC_LICENSE_KEY=***REMOVED***
 ENV NEW_RELIC_APP_NAME=Developer
 ENV NEW_RELIC_CONFIG_FILE=/deployment/newrelic.ini
 ENV NEW_RELIC_ENVIRONMENT=development
+ENV TERM xterm
 
 # Configure Django project
 ADD . /code
