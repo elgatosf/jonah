@@ -14,7 +14,8 @@ RUN apt-get update && apt-get install -y \
     vim \
     psmisc \
     libxml2-dev \
-    libxslt1-dev
+    libxslt1-dev \
+    ipython
 RUN easy_install pip
 RUN apt-get build-dep -y python-psycopg2
 
@@ -52,9 +53,10 @@ RUN rm /etc/nginx/sites-enabled/default
 ENV DJANGO_PRODUCTION=true
 ENV NEW_RELIC_LICENSE_KEY=invalid
 ENV NEW_RELIC_APP_NAME=Developer
+ENV DJANGO_SETTINGS_MODULE=ddp.settings
 ENV NEW_RELIC_CONFIG_FILE=/deployment/newrelic.ini
 ENV NEW_RELIC_ENVIRONMENT=development
-ENV DJANGO_SETTINGS_MODULE=ddp.settings
+ENV TERM xterm
 
 # Configure Django project
 ADD . /code
