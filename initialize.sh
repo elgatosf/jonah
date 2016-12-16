@@ -21,3 +21,6 @@ else
     # We're in production; use root password environment variable
     echo "import os; from django.contrib.auth.models import User; print 'Root user already exists' if User.objects.filter(username='root') else User.objects.create_superuser('root', 'admin@example.com', os.environ['ROOT_PASSWORD'])" | python /code/ddp/manage.py shell
 fi
+
+# (re)compile Translations
+python /code/ddp/manage.py compilemessages
