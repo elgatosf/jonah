@@ -103,7 +103,7 @@ class Deployer(object):
         """Stop a previously running development server"""
         self.printout("Stopping previously started containers... ", False)
         image_name = self.get_configuration(DOCKER_IMAGE_NAME, develop)
-        container_ids = self.run('docker ps -q --filter="ancestor=%s"' % image_name).split("\n")
+        container_ids = self.run('docker ps -q --filter=ancestor=%s' % image_name).split("\n")
         for container_id in container_ids:
             if len(container_id) > 0:
                 self.printout(container_id + ' ', False)
