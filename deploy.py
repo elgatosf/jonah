@@ -76,7 +76,7 @@ class Deployer(object):
 
     def get_container_id(self):
         """Returns the currently running container's ID if any"""
-        container_id = self.run('docker ps -q --filter="ancestor=%s"' % (self.get_configuration('DOCKER_IMAGE_NAME', 'develop'))).split('\n')[0]
+        container_id = self.run('docker ps -q --filter=ancestor=%s' % (self.get_configuration('DOCKER_IMAGE_NAME', 'develop'))).split('\n')[0]
         return container_id
 
     def full_name(self, environment):
