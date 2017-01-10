@@ -3,7 +3,7 @@
 # supervisord) every time the Docker image is run.
 
 # Initialize Django project
-python /code/ddp/manage.py collectstatic --noinput
+python /code/ddp/manage.py collectstatic --noinput --clear
 python /code/ddp/manage.py migrate --noinput
 
 # Create a Django superuser named `root` if it doesn't yet exist
