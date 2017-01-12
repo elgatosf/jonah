@@ -45,7 +45,7 @@ class Deployer(object):
 
     @staticmethod
     def __dir__():
-        return ['build', 'cleanbuild', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy', 'clean']
+        return ['build', 'cleanbuild', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy', 'deployonly', 'clean']
 
     def run(self, cmd, cwd=None):
         """Run a shell command"""
@@ -162,6 +162,7 @@ class Deployer(object):
         print("Running Tests... ", end="")
         output = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret'
             + ' -w=/code/ddp/ '
+            + ' -v ${PWD}/artifacts:/artifacts ***REMOVED***/auth'
             + self.full_name(environment=develop)
             + ' ./test.sh')
         print(output)
@@ -195,15 +196,19 @@ class Deployer(object):
         """Deploy on test servers"""
         self.deploy(environment=staging)
 
+    def deploy_directly(self, environment=production):
+        """Deploy as tag master on production server, without warning. Danger Zone."""
+        self.build()
+        self.push(environment)
+        self.notify_newrelic(environment)
+        self.notify_docker_cloud(environment)
+
     def deploy(self, environment=production):
         """Deploy on production servers"""
         self.test()
         tag = 'latest' if environment == staging else None
-        tag = self.tag(environment, tag=tag)
-        repo_name = self.get_configuration(DOCKER_IMAGE_NAME, environment)
-        self.push(environment)
-        self.notify_newrelic(environment)
-        self.notify_docker_cloud('staging')
+        self.tag(environment, tag=tag)
+        self.deploy_directly(environment=environment)
 
     def clean(self):
         """Delete exited containers, dangling images, and volumes"""
@@ -231,7 +236,6 @@ class Deployer(object):
                 self.printout(dangling_volume + ' ', False)
                 self.run("docker volume rm %s" % dangling_volume)
         self.printout("OK")
-
 
 
 if __name__ == '__main__':
