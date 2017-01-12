@@ -203,7 +203,6 @@ class Deployer(object):
         self.tag(environment, tag=environment)
         self.push(environment)
         self.notify_newrelic(environment)
-        self.notify_docker_cloud(environment)
 
     def deploy(self, environment=production):
         """Deploy on production servers"""
