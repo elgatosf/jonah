@@ -45,7 +45,8 @@ class Deployer(object):
 
     @staticmethod
     def __dir__():
-        return ['build', 'cleanbuild', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy', 'deployonly', 'clean']
+        return ['build', 'cleanbuild', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy',
+                'direct_deploy', 'clean']
 
     def run(self, cmd, cwd=None):
         """Run a shell command"""
@@ -196,9 +197,10 @@ class Deployer(object):
         """Deploy on test servers"""
         self.deploy(environment=staging)
 
-    def deploy_directly(self, environment=production):
+    def direct_deploy(self, environment=production):
         """Deploy as tag master on production server, without warning. Danger Zone."""
         self.build()
+        self.tag(environment, tag=environment)
         self.push(environment)
         self.notify_newrelic(environment)
         self.notify_docker_cloud(environment)
@@ -208,7 +210,7 @@ class Deployer(object):
         self.test()
         tag = 'latest' if environment == staging else None
         self.tag(environment, tag=tag)
-        self.deploy_directly(environment=environment)
+        self.direct_deploy(environment=environment)
 
     def clean(self):
         """Delete exited containers, dangling images, and volumes"""
