@@ -160,11 +160,11 @@ class Deployer(object):
         """Build and run Unit Tests"""
         self.build()
         print("Running Tests... ", end="")
-        output = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret'
-            + ' -w=/code/ddp/ '
-            + ' -v ${PWD}/artifacts:/artifacts ***REMOVED***/auth'
-            + self.full_name(environment=develop)
-            + ' ./test.sh')
+        output = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret '
+                          + '-v=artifacts:/artifacts '
+                          + '-w=/code/ddp/ '
+                          + self.full_name(environment=develop)
+                          + ' ./test.sh')
         print(output)
 
     def push(self, environment):
