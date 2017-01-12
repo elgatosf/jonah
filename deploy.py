@@ -139,8 +139,8 @@ class Deployer(object):
     def tag(self, environment, tag=None):
         """Tag git version and docker version"""
         self.build()
-        current_tag = self.run('git describe --tags').split('\n')[0]
         if tag:
+            current_tag = self.run('git describe --tags').split('\n')[0]
             new_tag = tag
         else:
             if sys.version_info >= (3, 0):
