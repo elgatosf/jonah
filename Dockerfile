@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM ubuntu:14.04.4
 
 # Set terminal to be noninteractive
 ENV DEBIAN_FRONTEND noninteractive
@@ -19,11 +19,15 @@ RUN apt-get update && apt-get install -y \
 RUN easy_install pip
 RUN apt-get build-dep -y python-psycopg2
 
+# Add non-privileged user for processes that don't want to run as root
+RUN adduser --disabled-password --gecos '' r
+
 # Handle urllib3 InsecurePlatformWarning
 RUN apt-get install -y libffi-dev libssl-dev libpython2.7-dev
-RUN pip install requests[security] ndg-httpsclient pyasn1 newrelic gunicorn
 
 # Install Python Requirements
+ADD deployment/requirements.txt /deployrequirements.txt
+RUN pip install -r /deployrequirements.txt
 ADD requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 
@@ -47,8 +51,9 @@ RUN rm /etc/nginx/sites-enabled/default
 # Enable production settings by default; for development, this can be set to
 # `false` in `docker run --env`
 ENV DJANGO_PRODUCTION=true
-ENV NEW_RELIC_LICENSE_KEY=***REMOVED***
+ENV NEW_RELIC_LICENSE_KEY=invalid
 ENV NEW_RELIC_APP_NAME=Developer
+ENV DJANGO_SETTINGS_MODULE=ddp.settings
 ENV NEW_RELIC_CONFIG_FILE=/deployment/newrelic.ini
 ENV NEW_RELIC_ENVIRONMENT=development
 ENV TERM xterm

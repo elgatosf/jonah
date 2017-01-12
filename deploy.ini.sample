@@ -1,0 +1,16 @@
+[general]
+NEW_RELIC_APP_NAME = My Amazing App
+NEW_RELIC_API_KEY = abcabcabc
+
+[develop]
+DOCKER_IMAGE_NAME = ***REMOVED***/whatever
+ROOT_PASSWORD = 123123
+SECRET_KEY = abcabc
+
+[staging]
+DOCKER_IMAGE_NAME = ***REMOVED***/***REMOVED***-whatever
+REDEPLOY_TRIGGER = https://***REMOVED***/api/app/v1/service/***REMOVED***
+
+[production]
+DOCKER_IMAGE_NAME = ***REMOVED***/***REMOVED***-whatever
+# no redeploy trigger, we want to redeploy manually
