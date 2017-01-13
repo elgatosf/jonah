@@ -140,9 +140,9 @@ class Deployer(object):
         """Tag git version and docker version"""
         self.build()
         if tag:
-            current_tag = self.run('git describe --tags').split('\n')[0]
             new_tag = tag
         else:
+            current_tag = self.run('git describe --tags').split('\n')[0]
             if sys.version_info >= (3, 0):
                 new_tag = input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
             else:
