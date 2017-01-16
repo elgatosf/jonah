@@ -25,3 +25,4 @@ raven
 coverage
 unittest-xml-reporting
 cobertura-clover-transform
+freezegun
