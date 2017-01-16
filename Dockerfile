@@ -14,7 +14,8 @@ RUN apt-get update && apt-get install -y \
     vim \
     psmisc \
     libxml2-dev \
-    libxslt1-dev
+    libxslt1-dev \
+    ipython
 
 RUN easy_install pip
 RUN apt-get build-dep -y python-psycopg2
