@@ -9,7 +9,7 @@ if sys.version_info >= (3, 0):
 else:
     from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 
-from subprocess import call, check_output, CalledProcessError
+from subprocess import call, check_output, CalledProcessError, STDOUT
 if sys.version_info >= (3, 0):
     from subprocess import getoutput
 
@@ -57,7 +57,7 @@ class Deployer(object):
             if sys.version_info >= (3, 0):
                 return getoutput(cmd)
             else:
-                return check_output(cmd.split(' '), cwd=working_dir if cwd is None else cwd)
+                return check_output(cmd.split(' '), stderr=STDOUT, cwd=working_dir if cwd is None else cwd)
         except CalledProcessError as e:
             if exceptions_should_bubble_up:
                 raise
@@ -160,7 +160,6 @@ class Deployer(object):
         self.printout("OK")
         return new_tag
 
-
     def compilemessages(self):
         """Compile I18N Strings"""
         container_id = self.get_container_id()
@@ -176,8 +175,8 @@ class Deployer(object):
                   + '-w=/code/ddp/ ' + self.full_name(environment=develop) \
                   + ' python /code/ddp/manage.py compilemessages'
         try:
-            output = self.run(cmd, exceptions_should_bubble_up=True)
-            self.printout(output, False)
+            output = self.run(cmd, exceptions_should_bubble_up=True).split("\n")
+            self.printout(output)
         except CalledProcessError as e:
             self.printout("No messages found")
 
