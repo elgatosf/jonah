@@ -45,8 +45,8 @@ class Deployer(object):
 
     @staticmethod
     def __dir__():
-        return ['build', 'cleanbuild', 'develop', 'stop', 'reload', 'shell', 'tag', 'test', 'stage', 'deploy',
-                'direct_deploy', 'clean']
+        return ['build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag', 'test', 'stage',
+                'deploy', 'direct_deploy', 'clean']
 
     def run(self, cmd, cwd=None):
         """Run a shell command"""
@@ -144,7 +144,7 @@ class Deployer(object):
         else:
             current_tag = self.run('git describe --tags').split('\n')[0]
             if sys.version_info >= (3, 0):
-                new_tag = input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
+                new_tag = input("Which tag should I  use? (Current is %s, leave empty for 'latest'): " % current_tag)
             else:
                 new_tag = raw_input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
 
@@ -157,11 +157,28 @@ class Deployer(object):
         self.printout("OK")
         return new_tag
 
+    def compilemessages(self):
+        """Compile I18N Strings"""
+        container_id = self.get_container_id()
+
+        self.printout("Running compilemessages... ", False)
+        cmd = ''
+        if len(container_id) >= 1:
+            container_id = self.get_container_id()
+            cmd = 'docker exec -t -i %s python /code/ddp/manage.py compilemessages' % container_id.split(' ')[0]
+        else:
+            cmd = 'docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret' \
+                  + ' -v ' + working_dir + ':/code ' \
+                  + '-w=/code/ddp/ ' + self.full_name(environment=develop) \
+                  + ' python /code/ddp/manage.py compilemessages'
+        self.printout(self.run(cmd), False)
+
     def test(self):
         """Build and run Unit Tests"""
         self.build()
-        print("Running Tests... ", end="")
-        output = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret '
+        self.compilemessages()
+        output = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret'
+                          + ' -v ' + working_dir + ':/code '
                           + '-v=' + working_dir + '/artifacts:/artifacts '
                           + '-w=/code/ddp/ '
                           + self.full_name(environment=develop)
