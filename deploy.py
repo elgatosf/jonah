@@ -48,7 +48,7 @@ class Deployer(object):
         return ['build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag', 'test', 'stage',
                 'deploy', 'direct_deploy', 'clean']
 
-    def run(self, cmd, cwd=None):
+    def run(self, cmd, cwd=None, exceptions_should_bubble_up=False):
         """Run a shell command"""
         try:
             if self.debug_mode:
@@ -59,8 +59,11 @@ class Deployer(object):
             else:
                 return check_output(cmd.split(' '), cwd=working_dir if cwd is None else cwd)
         except CalledProcessError as e:
-            print('Error\n\t' + e.output)
-            exit(1)
+            if exceptions_should_bubble_up:
+                raise
+            else:
+                print('Error\n\t' + e.output)
+                exit(1)
 
     @staticmethod
     def printout(text, add_newline=True):
@@ -157,6 +160,7 @@ class Deployer(object):
         self.printout("OK")
         return new_tag
 
+
     def compilemessages(self):
         """Compile I18N Strings"""
         container_id = self.get_container_id()
@@ -171,7 +175,11 @@ class Deployer(object):
                   + ' -v ' + working_dir + ':/code ' \
                   + '-w=/code/ddp/ ' + self.full_name(environment=develop) \
                   + ' python /code/ddp/manage.py compilemessages'
-        self.printout(self.run(cmd), False)
+        try:
+            output = self.run(cmd, exceptions_should_bubble_up=True)
+            self.printout(output, False)
+        except CalledProcessError as e:
+            self.printout("No messages found")
 
     def test(self):
         """Build and run Unit Tests"""
