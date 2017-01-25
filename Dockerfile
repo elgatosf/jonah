@@ -29,8 +29,17 @@ RUN apt-get install -y libffi-dev libssl-dev libpython2.7-dev
 # Install Python Requirements
 ADD deployment/requirements.txt /deployrequirements.txt
 RUN pip install -r /deployrequirements.txt
-ADD requirements.txt /requirements.txt
-RUN pip install -r /requirements.txt
+ADD python_requirements.txt /pythonrequirements.txt
+RUN pip install -r /pythonrequirements.txt
+
+# Install System Requirements
+ADD system_requirements.txt /systemrequirements.txt
+RUN apt-get install -y $(grep -vE "^\s*#" /systemrequirements.txt  | tr "\n" " ")
+
+# Run special system commands
+ADD system_initialization.sh /systeminitialization.sh
+RUN chmod ug+x /systeminitialization.sh
+RUN /systeminitialization.sh
 
 # configure environment
 RUN mkdir /djangomedia
