@@ -2,10 +2,11 @@
 requests[security]
 ndg-httpsclient
 pyasn1
+six>=1.10.*
 
 # Django!
-django~=1.8.13
-djangorestframework~=3.2.1
+django==1.8.*
+djangorestframework==3.*
 django-flat-theme
 psycopg2~=2.6.1
 
@@ -14,8 +15,8 @@ gunicorn
 
 # static files
 django-flat-theme
-django-storages~=1.4
-boto==2.39.0
+django-storages==1.*
+boto==2.*
 
 # monitoring
 newrelic
