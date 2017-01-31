@@ -3,21 +3,18 @@ from __future__ import print_function
 
 import os
 import sys
-
-if sys.version_info >= (3, 0):
-    from configparser import SafeConfigParser, NoSectionError, NoOptionError
-else:
-    from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
-
-from subprocess import call, check_output, CalledProcessError, STDOUT
-if sys.version_info >= (3, 0):
-    from subprocess import getoutput
+import subprocess
 
 # requests might now be available. Don't run the "deploy" command in this case
 try:
     import requests
 except ImportError:
     pass
+
+if sys.version_info >= (3, 0):
+    from configparser import SafeConfigParser, NoSectionError, NoOptionError
+else:
+    from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 
 working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -55,10 +52,10 @@ class Deployer(object):
                 print('\n> ' + cmd)
                 return ''
             if sys.version_info >= (3, 0):
-                return getoutput(cmd)
+                return subprocess.getoutput(cmd)
             else:
-                return check_output(cmd.split(' '), stderr=STDOUT, cwd=working_dir if cwd is None else cwd)
-        except CalledProcessError as e:
+                return subprocess.check_output(cmd.split(' '), stderr=subprocess.STDOUT, cwd=working_dir if cwd is None else cwd)
+        except subprocess.CalledProcessError as e:
             if exceptions_should_bubble_up:
                 raise
             else:
