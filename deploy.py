@@ -88,6 +88,7 @@ class Deployer(object):
             return
         for char in string_to_escape:
             print('\b', end='')
+        print('\b', end='')
 
     def build(self, environment=develop, clean=False):
         """Build the image"""
@@ -100,27 +101,19 @@ class Deployer(object):
         proc = subprocess.Popen(args, stdout=subprocess.PIPE)
 
         step_count = None
-        first_run = True
         while True:
             line = proc.stdout.readline()
             if len(line) < 1:
                 break
             if 'Step ' in line:
+                self.backspace(step_count)
                 step_count = line.split(' : ')[0]
+                print('. ' + step_count, end='')
                 continue
-
-            display_char = None
             if 'Using cache' in line:
-                display_char = 'c'
-            if 'Running' in line:
-                display_char = '.'
-            if display_char is not None:
-                if first_run:
-                    first_run = False
-                else:
-                    self.backspace(step_count + ' ')
-                print(display_char + ' ' + step_count, end='')
-            continue
+                self.backspace(step_count + ' ')
+                print('c ' + step_count, end='')
+
         print(' OK')
 
     def cleanbuild(self, environment=develop):
@@ -201,7 +194,7 @@ class Deployer(object):
         try:
             output = self.run(cmd, exceptions_should_bubble_up=True).split("\n")
             self.printout(output)
-        except CalledProcessError as e:
+        except subprocess.CalledProcessError as e:
             self.printout("No messages found")
 
     def test(self):
