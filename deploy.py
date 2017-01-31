@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 import sys
 import subprocess
+import shlex
 
 # requests might now be available. Don't run the "deploy" command in this case
 try:
@@ -47,14 +48,12 @@ class Deployer(object):
 
     def run(self, cmd, cwd=None, exceptions_should_bubble_up=False):
         """Run a shell command"""
+        if self.debug_mode:
+            print('\n> ' + cmd)
+            return ''
+
         try:
-            if self.debug_mode:
-                print('\n> ' + cmd)
-                return ''
-            if sys.version_info >= (3, 0):
-                return subprocess.getoutput(cmd)
-            else:
-                return subprocess.check_output(cmd.split(' '), stderr=subprocess.STDOUT, cwd=working_dir if cwd is None else cwd)
+            return subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT, cwd=working_dir if cwd is None else cwd)
         except subprocess.CalledProcessError as e:
             if exceptions_should_bubble_up:
                 raise
