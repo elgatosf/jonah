@@ -24,12 +24,12 @@ it to include your requirements.
     
 ### Configuration Files
 
-These files can live in your main project dir for jonah to find:
+These files need to live in your main project dir for jonah to find:
 
- - `python_requirements.txt` This file is in Pip-Syntax. Python packages found here will be installed
+ - `requirements.txt` This file is in Pip-Syntax. Python packages found here will be installed
    into the Docker container. (Note that jonah has its own requrements.txt already, which includes 
-   a fairly inclusive list of Django packages.)
- - `system_requirements.txt` This file is in apt-get syntax. System packages that will be installed
+   a fairly inclusive list of Django packages. This file should just contain your addons to that.)
+ - `apt-packages.txt` This file is in apt-get syntax. System packages that will be installed
    after basic system installation is complete.
  - `supervisord_local.conf` Additional config for supervisord. The file's contents will be appended 
    to `supervisord.conf` on build.
