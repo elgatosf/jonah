@@ -83,6 +83,12 @@ class Deployer(object):
         # environment should be 'develop', 'staging', or 'production'
         return self.get_configuration('DOCKER_IMAGE_NAME', environment)
 
+    def backspace(self, string_to_escape):
+        if string_to_escape is None:
+            return
+        for char in string_to_escape:
+            print('\b', end='')
+
     def build(self, environment=develop, clean=False):
         """Build the image"""
         self.stop()
@@ -90,10 +96,32 @@ class Deployer(object):
         run_command = 'docker build -t %s %s'
         if clean:
             run_command += ' --no-cache'
-        output = self.run(run_command % (self.full_name(environment=environment), working_dir)).split('\n')
-        num_steps = len(list(filter(lambda x: "Step" in x, output))) - 1
-        num_cached = len(list(filter(lambda y: "cache" in y, output)))
-        self.printout("OK, %i steps, %i cached" % (num_steps, num_cached))
+        args = shlex.split(run_command % (self.full_name(environment=environment), working_dir))
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+
+        step_count = None
+        first_run = True
+        while True:
+            line = proc.stdout.readline()
+            if len(line) < 1:
+                break
+            if 'Step ' in line:
+                step_count = line.split(' : ')[0]
+                continue
+
+            display_char = None
+            if 'Using cache' in line:
+                display_char = 'c'
+            if 'Running' in line:
+                display_char = '.'
+            if display_char is not None:
+                if first_run:
+                    first_run = False
+                else:
+                    self.backspace(step_count + ' ')
+                print(display_char + ' ' + step_count, end='')
+            continue
+        print(' OK')
 
     def cleanbuild(self, environment=develop):
         """Build the image from scratch"""
