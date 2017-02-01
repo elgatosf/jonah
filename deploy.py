@@ -298,7 +298,8 @@ if __name__ == '__main__':
         getattr(d, sys.argv[1])()
     else:
         print("USAGE:")
-        print("\t%s %s\n" % (sys.argv[0], dir(d)))
+        print("\t%s <COMMAND>, where command is one of the following:\n" % sys.argv[0])
+
         for arg in dir(d):
-            print("\t" + arg + "\t" + getattr(d, arg).__doc__)
+            print("\t" + arg.ljust(10) + "\t" + getattr(d, arg).__doc__)
         exit(0)
