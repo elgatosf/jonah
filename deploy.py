@@ -46,11 +46,15 @@ class Deployer(object):
         return ['build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag', 'test', 'stage',
                 'deploy', 'direct_deploy', 'clean']
 
-    def run(self, cmd, cwd=None, exceptions_should_bubble_up=False):
+    def run(self, cmd, cwd=None, exceptions_should_bubble_up=False, spew=False):
         """Run a shell command"""
         if self.debug_mode:
             print('\n> ' + cmd)
             return ''
+
+        if spew:
+            # return live output for the function to handle instead of one blob
+            return subprocess.Popen(shlex.split(cmd), cwd=working_dir if cwd is None else cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         try:
             return subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT, cwd=working_dir if cwd is None else cwd)
@@ -93,12 +97,11 @@ class Deployer(object):
     def build(self, environment=develop, clean=False):
         """Build the image"""
         self.stop()
-        self.printout("Building... ", False)
+        self.printout("Building ", False)
         run_command = 'docker build -t %s %s'
         if clean:
             run_command += ' --no-cache'
-        args = shlex.split(run_command % (self.full_name(environment=environment), working_dir))
-        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+        proc = self.run(run_command % (self.full_name(environment=environment), working_dir), spew=True)
 
         step_count = None
         while True:
@@ -154,7 +157,7 @@ class Deployer(object):
             self.develop()
             container_id = self.get_container_id()
         cmd = 'docker exec -t -i %s /bin/bash' % container_id.split(' ')[0]
-        call(cmd, shell=True)
+        subprocess.call(cmd, shell=True)
 
     def tag(self, environment, tag=None):
         """Tag git version and docker version"""
@@ -166,7 +169,7 @@ class Deployer(object):
             if sys.version_info >= (3, 0):
                 new_tag = input("Which tag should I  use? (Current is %s, leave empty for 'latest'): " % current_tag)
             else:
-                new_tag = raw_input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
+                new_tag = input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
 
         if len(new_tag) < 1 or new_tag == "\n":
             new_tag = 'latest'
@@ -201,13 +204,19 @@ class Deployer(object):
         """Build and run Unit Tests"""
         self.build()
         self.compilemessages()
-        output = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret'
-                          + ' -v ' + working_dir + ':/code '
-                          + '-v=' + working_dir + '/artifacts:/artifacts '
-                          + '-w=/code/ddp/ '
-                          + self.full_name(environment=develop)
-                          + ' ./test.sh')
-        print(output)
+        print('Beginning Unit Tests...')
+        proc = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret'
+                        + ' -v ' + working_dir + ':/code '
+                        + '-v=' + working_dir + '/artifacts:/artifacts '
+                        + '-w=/code/ddp/ '
+                        + self.full_name(environment=develop)
+                        + ' ./test.sh',
+                        spew=True)
+        while True:
+            char = proc.stdout.read(1)
+            if len(char) < 1:
+                break
+            print(char, end='')
 
     def push(self, environment):
         repo_name = self.get_configuration(DOCKER_IMAGE_NAME, environment)
