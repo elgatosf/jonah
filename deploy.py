@@ -3,21 +3,19 @@ from __future__ import print_function
 
 import os
 import sys
-
-if sys.version_info >= (3, 0):
-    from configparser import SafeConfigParser, NoSectionError, NoOptionError
-else:
-    from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
-
-from subprocess import call, check_output, CalledProcessError, STDOUT
-if sys.version_info >= (3, 0):
-    from subprocess import getoutput
+import subprocess
+import shlex
 
 # requests might now be available. Don't run the "deploy" command in this case
 try:
     import requests
 except ImportError:
     pass
+
+if sys.version_info >= (3, 0):
+    from configparser import SafeConfigParser, NoSectionError, NoOptionError
+else:
+    from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 
 working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -48,17 +46,19 @@ class Deployer(object):
         return ['build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag', 'test', 'stage',
                 'deploy', 'direct_deploy', 'clean']
 
-    def run(self, cmd, cwd=None, exceptions_should_bubble_up=False):
+    def run(self, cmd, cwd=None, exceptions_should_bubble_up=False, spew=False):
         """Run a shell command"""
+        if self.debug_mode:
+            print('\n> ' + cmd)
+            return ''
+
+        if spew:
+            # return live output for the function to handle instead of one blob
+            return subprocess.Popen(shlex.split(cmd), cwd=working_dir if cwd is None else cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
         try:
-            if self.debug_mode:
-                print('\n> ' + cmd)
-                return ''
-            if sys.version_info >= (3, 0):
-                return getoutput(cmd)
-            else:
-                return check_output(cmd.split(' '), stderr=STDOUT, cwd=working_dir if cwd is None else cwd)
-        except CalledProcessError as e:
+            return subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT, cwd=working_dir if cwd is None else cwd)
+        except subprocess.CalledProcessError as e:
             if exceptions_should_bubble_up:
                 raise
             else:
@@ -87,17 +87,37 @@ class Deployer(object):
         # environment should be 'develop', 'staging', or 'production'
         return self.get_configuration('DOCKER_IMAGE_NAME', environment)
 
+    def backspace(self, string_to_escape):
+        if string_to_escape is None:
+            return
+        for char in string_to_escape:
+            print('\b', end='')
+        print('\b', end='')
+
     def build(self, environment=develop, clean=False):
         """Build the image"""
         self.stop()
-        self.printout("Building... ", False)
+        self.printout("Building ", False)
         run_command = 'docker build -t %s %s'
         if clean:
             run_command += ' --no-cache'
-        output = self.run(run_command % (self.full_name(environment=environment), working_dir)).split('\n')
-        num_steps = len(list(filter(lambda x: "Step" in x, output))) - 1
-        num_cached = len(list(filter(lambda y: "cache" in y, output)))
-        self.printout("OK, %i steps, %i cached" % (num_steps, num_cached))
+        proc = self.run(run_command % (self.full_name(environment=environment), working_dir), spew=True)
+
+        step_count = None
+        while True:
+            line = proc.stdout.readline()
+            if len(line) < 1:
+                break
+            if 'Step ' in line:
+                self.backspace(step_count)
+                step_count = line.split(' : ')[0]
+                print('. ' + step_count, end='')
+                continue
+            if 'Using cache' in line:
+                self.backspace(step_count + ' ')
+                print('c ' + step_count, end='')
+
+        print(' OK')
 
     def cleanbuild(self, environment=develop):
         """Build the image from scratch"""
@@ -137,7 +157,7 @@ class Deployer(object):
             self.develop()
             container_id = self.get_container_id()
         cmd = 'docker exec -t -i %s /bin/bash' % container_id.split(' ')[0]
-        call(cmd, shell=True)
+        subprocess.call(cmd, shell=True)
 
     def tag(self, environment, tag=None):
         """Tag git version and docker version"""
@@ -149,7 +169,7 @@ class Deployer(object):
             if sys.version_info >= (3, 0):
                 new_tag = input("Which tag should I  use? (Current is %s, leave empty for 'latest'): " % current_tag)
             else:
-                new_tag = raw_input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
+                new_tag = input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
 
         if len(new_tag) < 1 or new_tag == "\n":
             new_tag = 'latest'
@@ -177,20 +197,26 @@ class Deployer(object):
         try:
             output = self.run(cmd, exceptions_should_bubble_up=True).split("\n")
             self.printout(output)
-        except CalledProcessError as e:
+        except subprocess.CalledProcessError as e:
             self.printout("No messages found")
 
     def test(self):
         """Build and run Unit Tests"""
         self.build()
         self.compilemessages()
-        output = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret'
-                          + ' -v ' + working_dir + ':/code '
-                          + '-v=' + working_dir + '/artifacts:/artifacts '
-                          + '-w=/code/ddp/ '
-                          + self.full_name(environment=develop)
-                          + ' ./test.sh')
-        print(output)
+        print('Beginning Unit Tests...')
+        proc = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret'
+                        + ' -v ' + working_dir + ':/code '
+                        + '-v=' + working_dir + '/artifacts:/artifacts '
+                        + '-w=/code/ddp/ '
+                        + self.full_name(environment=develop)
+                        + ' ./test.sh',
+                        spew=True)
+        while True:
+            char = proc.stdout.read(1)
+            if len(char) < 1:
+                break
+            print(char, end='')
 
     def push(self, environment):
         repo_name = self.get_configuration(DOCKER_IMAGE_NAME, environment)
