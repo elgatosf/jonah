@@ -165,7 +165,10 @@ class Deployer(object):
         if tag:
             new_tag = tag
         else:
-            current_tag = self.run('git describe --tags').split('\n')[0]
+            try:
+                current_tag = self.run('git describe --tags', exceptions_should_bubble_up=True).split('\n')[0]
+            except subprocess.CalledProcessError:
+                current_tag = 'latest'
             if sys.version_info >= (3, 0):
                 new_tag = input("Which tag should I  use? (Current is %s, leave empty for 'latest'): " % current_tag)
             else:
