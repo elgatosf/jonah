@@ -50,7 +50,6 @@ class Deployer(object):
         """Run a shell command"""
         if self.debug_mode:
             print('\n> ' + cmd)
-            return ''
 
         if spew:
             # return live output for the function to handle instead of one blob
