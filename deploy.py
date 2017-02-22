@@ -36,6 +36,7 @@ SECRET_KEY = 'SECRET_KEY'
 
 class Deployer(object):
     debug_mode = False
+    already_built = False
 
     def __init__(self, config_file_path = os.path.join(working_dir, 'deploy.ini')):
         self.parser = SafeConfigParser()
@@ -95,6 +96,9 @@ class Deployer(object):
 
     def build(self, environment=develop, clean=False):
         """Build the image"""
+        if self.already_built:
+            return
+
         self.stop()
         self.printout("Building ", False)
         run_command = 'docker build -t %s %s'
@@ -117,6 +121,7 @@ class Deployer(object):
                 print('c ' + step_count, end='')
 
         print(' OK')
+        self.already_built = True
 
     def cleanbuild(self, environment=develop):
         """Build the image from scratch"""
