@@ -169,8 +169,7 @@ class Deployer(object):
             if sys.version_info >= (3, 0):
                 new_tag = input("Which tag should I  use? (Current is %s, leave empty for 'latest'): " % current_tag)
             else:
-                new_tag = input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
-
+                new_tag = raw_input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
         if len(new_tag) < 1 or new_tag == "\n":
             new_tag = 'latest'
         self.printout("Tagging as '%s'... " % new_tag, False)
