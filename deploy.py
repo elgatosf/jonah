@@ -5,6 +5,7 @@ import os
 import sys
 import subprocess
 import shlex
+import shutil
 
 # requests might now be available. Don't run the "deploy" command in this case
 try:
@@ -44,8 +45,8 @@ class Deployer(object):
 
     @staticmethod
     def __dir__():
-        return ['build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag', 'test', 'stage',
-                'deploy', 'direct_deploy', 'clean']
+        return ['initialize', 'build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag',
+                'test', 'stage', 'deploy', 'direct_deploy', 'clean']
 
     def run(self, cmd, cwd=None, exceptions_should_bubble_up=False, spew=False):
         """Run a shell command"""
@@ -82,7 +83,8 @@ class Deployer(object):
 
     def get_container_id(self):
         """Returns the currently running container's ID if any"""
-        container_id = self.run('docker ps -q --filter=ancestor=%s' % (self.get_configuration('DOCKER_IMAGE_NAME', 'develop'))).split('\n')[0]
+        docker_image_name = self.get_configuration('DOCKER_IMAGE_NAME', 'develop')
+        container_id = self.run('docker ps -q --filter=ancestor=%s' % docker_image_name).split('\n')[0]
         return container_id
 
     def full_name(self, environment):
@@ -95,6 +97,22 @@ class Deployer(object):
         for char in string_to_escape:
             print('\b', end='')
         print('\b', end='')
+
+    # User Actions #####################################################################################################
+
+    def initialize(self):
+        """Initialize a new jonah project in the current directory"""
+
+        q = 'Please enter a name for your new project: '
+        if sys.version_info >= (3, 0):
+            project_name = input(q)
+        else:
+            project_name = raw_input(q)
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        support_files_dir = os.path.join(base_dir, 'support_files')
+        cwd = os.getcwd()
+        shutil.copytree(support_files_dir, os.path.join(cwd, project_name))
 
     def build(self, environment=develop, clean=False):
         """Build the image"""
