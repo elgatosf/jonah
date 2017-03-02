@@ -107,7 +107,10 @@ class Deployer(object):
         proc = self.run(run_command % (self.full_name(environment=environment), working_dir), spew=True)
 
         step_count = None
+        line = None
+        lastline = None
         while True:
+            lastline = line
             line = proc.stdout.readline()
             if len(line) < 1:
                 break
@@ -120,7 +123,11 @@ class Deployer(object):
                 self.backspace(step_count + ' ')
                 print('c ' + step_count, end='')
 
-        print(' OK')
+        proc.wait()
+        if proc.returncode == 0:
+            print(' OK')
+        else:
+            print("\nBuild failed with '{}'".format(lastline.strip()))
         self.already_built = True
 
     def cleanbuild(self, environment=develop):
