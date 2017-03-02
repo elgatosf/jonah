@@ -124,8 +124,10 @@ class Deployer(object):
         except (OSError, FileExistsError or None):
             print('A directory called "{}" already exists. Please choose another directory name.'.format(project_name))
             return
-        print('Created new directory "{}". Next, check your Dockerfile and then start a shell by running "{} shell" '
-              'inside the {} directory.'.format(project_name, sys.argv[0], project_name))
+        print('Created new directory "{}". Next steps:\n'
+              ' - edit deploy.ini to fit your needs\n'
+              ' - run \'{} startproject\''
+              .format(project_name, sys.argv[0]))
 
     def build(self, environment=develop, clean=False):
         """Build the image"""
