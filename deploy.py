@@ -14,11 +14,11 @@ except ImportError:
     pass
 
 if sys.version_info >= (3, 0):
-    from configparser import SafeConfigParser, NoSectionError, NoOptionError
+    from configparser import ConfigParser, NoSectionError, NoOptionError
 else:
-    from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
+    from ConfigParser import SafeConfigParser as ConfigParser, NoSectionError, NoOptionError
 
-working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+working_dir = os.getcwd()
 
 # environment names
 general = 'general'
@@ -39,14 +39,14 @@ class Deployer(object):
     debug_mode = False
     already_built = False
 
-    def __init__(self, config_file_path = os.path.join(working_dir, 'deploy.ini')):
-        self.parser = SafeConfigParser()
+    def __init__(self, config_file_path=os.path.join(working_dir, 'jonah.ini')):
+        self.parser = ConfigParser()
         self.parser.read(config_file_path)
 
     @staticmethod
     def __dir__():
         return ['initialize', 'build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag',
-                'test', 'stage', 'deploy', 'direct_deploy', 'clean']
+                'test', 'stage', 'deploy', 'direct_deploy', 'clean', 'startproject']
 
     def run(self, cmd, cwd=None, exceptions_should_bubble_up=False, spew=False):
         """Run a shell command"""
@@ -114,20 +114,23 @@ class Deployer(object):
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
         support_files_dir = os.path.join(base_dir, 'support_files')
-        cwd = os.getcwd()
 
         if sys.version_info < (3, 0):
             FileExistsError = None
 
         try:
-            shutil.copytree(support_files_dir, os.path.join(cwd, project_name))
+            shutil.copytree(support_files_dir, os.path.join(working_dir, project_name))
         except (OSError, FileExistsError):
             print('A directory called "{}" already exists. Please choose another directory name.'.format(project_name))
             return
         print('Created new directory "{}". Next steps:\n'
-              ' - edit deploy.ini to fit your needs\n'
+              ' - edit jonah.ini to fit your needs\n'
               ' - run \'{} startproject\''
               .format(project_name, sys.argv[0]))
+
+    def startproject(self):
+        """Spins up the container for the first time and creates an empty Django project"""
+        self.build()
 
     def build(self, environment=develop, clean=False):
         """Build the image"""
