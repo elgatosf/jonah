@@ -54,10 +54,12 @@ class Deployer(object):
 
         if spew:
             # return live output for the function to handle instead of one blob
-            return subprocess.Popen(shlex.split(cmd), cwd=working_dir if cwd is None else cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            return subprocess.Popen(shlex.split(cmd), cwd=working_dir if cwd is None else cwd, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
 
         try:
-            return subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT, cwd=working_dir if cwd is None else cwd)
+            return subprocess.check_output(shlex.split(cmd), cwd=working_dir if cwd is None else cwd,
+                                           stderr=subprocess.STDOUT,)
         except subprocess.CalledProcessError as e:
             if exceptions_should_bubble_up:
                 raise
