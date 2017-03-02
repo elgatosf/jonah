@@ -103,16 +103,29 @@ class Deployer(object):
     def initialize(self):
         """Initialize a new jonah project in the current directory"""
 
-        q = 'Please enter a name for your new project: '
-        if sys.version_info >= (3, 0):
-            project_name = input(q)
+        if len(sys.argv) > 2 and sys.argv[2] != 'debug':
+            project_name = sys.argv[2]
         else:
-            project_name = raw_input(q)
+            q = 'Please enter a name for your new project: '
+            if sys.version_info >= (3, 0):
+                project_name = input(q)
+            else:
+                project_name = raw_input(q)
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
         support_files_dir = os.path.join(base_dir, 'support_files')
         cwd = os.getcwd()
-        shutil.copytree(support_files_dir, os.path.join(cwd, project_name))
+
+        if sys.version_info < (3, 0):
+            FileExistsError = None
+
+        try:
+            shutil.copytree(support_files_dir, os.path.join(cwd, project_name))
+        except (OSError, FileExistsError or None):
+            print('A directory called "{}" already exists. Please choose another directory name.'.format(project_name))
+            return
+        print('Created new directory "{}". Next, check your Dockerfile and then start a shell by running "{} shell" '
+              'inside the {} directory.'.format(project_name, sys.argv[0], project_name))
 
     def build(self, environment=develop, clean=False):
         """Build the image"""
