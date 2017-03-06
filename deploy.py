@@ -59,7 +59,7 @@ class Deployer(object):
 
         try:
             return subprocess.check_output(shlex.split(cmd), cwd=self.working_dir if cwd is None else cwd,
-                                           stderr=subprocess.STDOUT,)
+                                           stderr=subprocess.STDOUT,).decode('utf-8')
         except subprocess.CalledProcessError as e:
             if exceptions_should_bubble_up:
                 raise
@@ -158,7 +158,7 @@ class Deployer(object):
         lastline = None
         while True:
             lastline = line
-            line = proc.stdout.readline()
+            line = proc.stdout.readline().decode('utf-8')
             if len(line) < 1:
                 break
             if 'Step ' in line:
@@ -185,7 +185,7 @@ class Deployer(object):
         """Stop a previously running development server"""
         self.printout("Stopping previously started containers... ", False)
         image_name = self.get_configuration(DOCKER_IMAGE_NAME, develop)
-        container_ids = self.run('docker ps -q --filter=ancestor=%s' % image_name).split("\n")
+        container_ids = self.run('docker ps -q --filter=ancestor=%s' % image_name).split('\n')
         for container_id in container_ids:
             if len(container_id) > 0:
                 self.printout(container_id + ' ', False)
