@@ -115,8 +115,12 @@ class Deployer(object):
         support_files_dir = os.path.join(base_dir, 'support_files')
 
         self.printout('Creating \'{}\' directory... '.format(project_name), False)
+        # In Python 3 there is exception FileExistsError. But it is not available
+        # in Python 2. For Python 2 fall back to OSError exception.
         if sys.version_info < (3, 0):
-            FileExistsError = None
+            FileExistsError = OSError
+        else:
+            from builtins import FileExistsError
         try:
             shutil.copytree(support_files_dir, os.path.join(self.working_dir, project_name))
         except (OSError, FileExistsError):
