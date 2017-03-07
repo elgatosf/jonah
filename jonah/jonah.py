@@ -273,7 +273,7 @@ class Deployer(object):
         proc = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret'
                         + ' -v ' + self.working_dir + ':/code '
                         + '-v=' + self.working_dir + '/artifacts:/artifacts '
-                        + '-w=/code/ddp/ '
+                        + '-w=/code/ '
                         + self.full_name(environment=develop)
                         + ' ./test.sh',
                         spew=True)
