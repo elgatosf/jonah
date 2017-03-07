@@ -72,30 +72,13 @@ Moving an Existing Project to Jonah
 -----------------------------------
 
 Jonah is easiest to use when you start a new project. However, it should work with any directory that has a
-``Dockerfile`` and a ``jonah.ini`` file.
+``Dockerfile`` and a ``jonah.ini`` file. A good way to move a Django project into Jonah would probably be the following:
 
-Prerequisites right now are - your Django project needs to be called
-``ddp`` for “Docker deployable project”. - you have Python 2.7 or 3.5
-installed - the jonah is included as a subfolder (we use submodules
-usually) next to your ddp project - this subfolder is called
-``deployment``
+1. Rename your Django project to ``ddp``
+2. Create a new Jonah project with the name of your Django project
+3. Replace the ddp directory inside Jonah by your own
+4. Profit
 
-Once you have the prerequisites met, symlink the Dockerfile and
-.dockerignore into your root directory:
-
-::
-
-    > cd /my/project/dir
-    > ln -s deployment/Dockerfile .
-    > ln -s deployment/.dockerignore .
-
-To configure, copy ``deploy.ini.sample`` to your main directory and
-rename it to ``deploy.ini``. Then edit it to include your requirements.
-
-::
-
-    > cd /my/project/dir
-    > cp deployment/deploy.ini.sample deploy.ini
 
 Configuration Files
 ~~~~~~~~~~~~~~~~~~~
