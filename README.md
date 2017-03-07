@@ -1,4 +1,4 @@
-# Jonah is a way to pack your Django Deployment and Testing into Docker
+# Jonah is a way to pack your Django Development, Deployment and Testing into Docker
 
 ![Animated GIF of jonah commands in action](jonah.gif)
 
