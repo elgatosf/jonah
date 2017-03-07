@@ -71,5 +71,8 @@ ADD . /code
 WORKDIR /code
 RUN chmod ug+x /code/jonah/initialize.sh
 
+# Configure Supervisor
+ADD jonah/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 # Run Supervisor
 CMD ["/usr/bin/supervisord"]
