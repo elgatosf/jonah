@@ -23,6 +23,9 @@ Then run it using the ``jonah <command>`` syntax. To start a new project, run
 Jonah will then create a new directory called ``your_new_project`` in the current working directory and create an empty
 Django project inside. Django projects managed by Jonah *need* to be called ``ddp``.
 
+Developing Your Project
+~~~~~~~~~~~~~~~~~~~~~~~
+
 To run your new empty project, run ``jonah develop``:
 
 ::
@@ -37,6 +40,17 @@ visit ``http://localhost/`` (port 80) in your browser.
 The ``ddp`` directory inside your project directory is transparently mounted into the container, so that any changes in
 your code are directly applied to the running code. (For some changes, you might have to reload the Django server, but
 more on that later.)
+
+Most of the time when developing a Django application, you don't need to restart the development server constantly. For
+changes to models, settings, or changes to ``admin.py``, you can reload the Django server using this command:
+
+::
+
+    > jonah reload
+
+Getting A Shell
+~~~~~~~~~~~~~~~
+
 
 Now, let's start a new app inside the project. To do that, you can use Jonah's ``shell`` feature. Open a shell inside
 the container like so:
@@ -58,12 +72,13 @@ Congratulations! You just ran Django code inside your container. It is recommend
 ``migrate``, and other ``manage.py`` commands like this as well. Type ``exit`` to exit the container shell and return
 to your regular command line.
 
-Most of the time when developing a Django application, you don't need to restart the development server constantly. For
-changes to models, settings, or changes to ``admin.py``, you can reload the Django server using this command:
+Running Tests
+~~~~~~~~~~~~~
 
-::
+``jonah test`` will run all your tests in the container and display live output.
 
-    > jonah reload
+Stopping the Container
+~~~~~~~~~~~~~~~~~~~~~~
 
 Once you're calling it quits after a long day of productive coding, use ``jonah stop`` to shut down your container.
 Happy coding. :)
