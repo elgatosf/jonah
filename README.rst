@@ -85,6 +85,7 @@ Configuration
 
 The ``initialize`` command will create a number of configuration files. Here is what they are used for:
 
+- ``jonah.ini`` General configuration for jonah, most importantly the Docker image name
 -  ``requirements.txt`` This file is in Pip-Syntax. Python packages found here will be installed into the Docker
    container.
 -  ``test.sh`` A shell script to run your tests. In many cases, this should just contain ``manage.py test``, but
@@ -99,56 +100,36 @@ The ``initialize`` command will create a number of configuration files. Here is 
 -  ``jonah/system_initialization.sh`` A shell script to run ONCE after the system installation has finished.
 
 
-deploy.py
----------
+Full List of Commands
+---------------------
 
-You can use the ``deploy.py`` script to automatically build, run, and
-deploy the Docker container. Before you run ``deploy.py``, make sure
-that you are in a shell environment that can run Docker commands (e.g.
-``docker ps`` does not throw any errors).
-
-The following is a list of commands you can use:
-
--  ``deploy.py build`` Builds the docker image
--  ``deploy.py develop`` Builds the docker image and runs a development
-   server on it. You can access the server by pointing your browser to
-   http://localhost/
--  ``deploy.py reload`` Reloads the running development server
--  ``deploy.py shell`` Opens a shell within the container
--  ``deploy.py test`` Builds and runs tests
--  ``deploy.py deploy`` Builds the image and pushes it to the production
-   repository
+===================== ==================================================================================================
+Command               Description
+===================== ==================================================================================================
+``initialize``	      Initialize a new jonah project in the current directory
+``build``             Build the image.
+``cleanbuild``        Build the image from scratch instead of relying on cached layers.
+``develop``   	      Run dev server
+``reload``    	      Reload Django process on dev server
+``shell``     	      Get a shell on the dev server
+``stop``      	      Stop a previously running development server
+``test``      	      Build and run Unit Tests
+``compilemessages``	  Compile internationalization Strings
+``tag``       	      Add git and docker tags
+``deploy``    	      Deploy to production. This command will ask you for a tag before pushing anything to the server
+``stage``     	      Deploy to staging
+``direct_deploy``	  Deploy as tag "master" on production server, without warning and without asking for confirmation
+``clean``             Delete exited containers, dangling images, and volumes. Good to clean up hard drive space.
+===================== ==================================================================================================
 
 To get a full list of commands, run ``deploy.py`` without any arguments.
-
-Development
------------
-
-No official road map is in place to date, but here are a few of the
-problems we’d like to tackle or see tackled in the future:
-
--  **Init Command.** As it is, you’ll have to create the proper document
-   structure for the commands to work yourself. An “init” command should
-   solve that. Failing that, we’ll try to provide an example project to
-   get you started.
--  **Better Documentation**
--  **Pip Packaging.** Being able to ``pip install jonah`` would be nice.
--  **Live output of docker output.** Right now, capture the output of
-   any Docker command, and display it once it’s done running. This is
-   annoying for long-running commands, so we’d like to print that output
-   as it’s happening.
--  **Better configuration options.** Right now, you have to change
-   various files to update Django or the base requirements. We want that
-   to be easier.
 
 Help Out and Code of Conduct
 ----------------------------
 
-We’d like to encourage your feature requests, bug reports and pull
-requests. Please note that the `Django Code of Conduct`_ applies to this
-project. Be friendly, welcoming, considerate, respectful, and be careful
-in the words that you choose please. If you think you’ve witnessed a CoC
-violation, please contact Daniel.
+We’d like to encourage your feature requests, bug reports and pull requests. Please note that the
+`Django Code of Conduct`_ applies to this project. Be friendly, welcoming, considerate, respectful, and be careful
+in the words that you choose please. If you think you’ve witnessed a CoC violation, please contact Daniel.
 
 Heritage
 --------
@@ -158,8 +139,7 @@ Jonah is inspired by `Joe Mornin’s excellent ``django-docker```_.
 License
 -------
 
-This project is released under the MIT license. See the ``LICENSE`` file
-for more info.
+This project is released under the MIT license. See the ``LICENSE`` file for more info.
 
 .. _Django Code of Conduct: https://www.djangoproject.com/conduct/
 .. _Joe Mornin’s excellent ``django-docker``: https://github.com/morninj/django-docker
