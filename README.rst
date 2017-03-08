@@ -21,7 +21,7 @@ Then run it using the ``jonah <command>`` syntax. To start a new project, run
     > jonah initialize your_new_project
 
 Jonah will then create a new directory called ``your_new_project`` in the current working directory and create an empty
-Django project inside. Django projects managed by Jonah *need* to be called ``ddp``.
+Django project inside.
 
 Developing Your Project
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -143,6 +143,18 @@ File                          Description
 ``jonah/spinup.sh``           A shell script to run EVERY TIME the container is spun up.
 ``jonah/finalize_build.sh``   A shell script to run ONCE after the system installation has finished.
 ============================= ==========================================================================================
+
+
+Sidebar: Why ``ddp``?
+---------------------
+What is the meaning of the ``ddp`` directory?
+
+While a Jonah project can have any name, the *Django project* it encapsulates *needs* to be called ``ddp``, so all
+the scripts and calls inside Jonah know where to find the Django project, how to specify settings, etc. "DDP" stands
+for "Docker Deployable Project".
+
+While this constraint could be lifted in the future, it is not very high on our list of priorities right now. If you
+feel differently, please let us know by opening or adding to an issue on GitHub.
 
 Help Out and Code of Conduct
 ----------------------------
