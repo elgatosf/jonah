@@ -35,7 +35,7 @@ ADD jonah/apt-packages.txt /aptpackages.txt
 RUN apt-get install -y $(grep -vE "^\s*#" /aptpackages.txt  | tr "\n" " ")
 
 # Run special system commands
-ADD jonah/system_initialization.sh /systeminitialization.sh
+ADD jonah/finalize_build.sh /systeminitialization.sh
 RUN chmod ug+x /systeminitialization.sh
 RUN /systeminitialization.sh
 
@@ -69,7 +69,7 @@ ENV TERM xterm
 # Configure Django project
 ADD . /code
 WORKDIR /code
-RUN chmod ug+x /code/jonah/initialize.sh
+RUN chmod ug+x /code/jonah/spinup.sh
 
 # Configure Supervisor
 ADD jonah/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

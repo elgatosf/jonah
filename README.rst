@@ -95,26 +95,6 @@ Jonah is easiest to use when you start a new project. However, it should work wi
 4. Profit
 
 
-Configuration
--------------
-
-The ``initialize`` command will create a number of configuration files. Here is what they are used for:
-
-- ``jonah.ini`` General configuration for jonah, most importantly the Docker image name
--  ``requirements.txt`` This file is in Pip-Syntax. Python packages found here will be installed into the Docker
-   container.
--  ``test.sh`` A shell script to run your tests. In many cases, this should just contain ``manage.py test``, but
-   maybe you want to create code coverage, or include nose, or transform unit test results to other formats for your
-   build server to use.
--  ``jonah/apt-packages.txt`` This file is in apt-get syntax. System packages that will be installed after basic system
-   installation is complete.
--  ``jonah/supervisord.conf`` Config file for supervisord. By default, this runs ``initialize.sh``, then starts
-   gunicorn and the Django server.
--  ``jonah/nginx.conf`` Config file for nginx. Look at this if you want to e.g. setup different static file handling.
--  ``jonah/initialize.sh`` A shell script to run EVERY TIME the container is spun up.
--  ``jonah/system_initialization.sh`` A shell script to run ONCE after the system installation has finished.
-
-
 Full List of Commands
 ---------------------
 
@@ -138,6 +118,31 @@ Command               Description
 ===================== ==================================================================================================
 
 To get a full list of commands, run ``deploy.py`` without any arguments.
+
+
+Configuration
+-------------
+
+The ``initialize`` command will create a number of configuration files. Here is what they are used for:
+
+============================= ==========================================================================================
+File                          Description
+============================= ==========================================================================================
+``jonah.ini``                 General configuration for jonah, most importantly the Docker image name
+``requirements.txt``          This file is in Pip-Syntax. Python packages found here will be installed into the Docker
+                              container.
+``test.sh``                   A shell script to run your tests. In many cases, this should just contain
+                              ``manage.py test``, but maybe you want to create code coverage, or include nose, or
+                              transform unit test results to other formats for your build server to use.
+``jonah/apt-packages.txt``    This file is in apt-get syntax. System packages that will be installed after basic system
+                              installation is complete.
+``jonah/supervisord.conf``    Config file for supervisord. By default, this runs ``spinup.sh``, then starts
+                              gunicorn and the Django server.
+``jonah/nginx.conf``          Config file for nginx. Look at this if you want to e.g. setup different static file
+                              handling.
+``jonah/spinup.sh``           A shell script to run EVERY TIME the container is spun up.
+``jonah/finalize_build.sh``   A shell script to run ONCE after the system installation has finished.
+============================= ==========================================================================================
 
 Help Out and Code of Conduct
 ----------------------------
