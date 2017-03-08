@@ -5,6 +5,7 @@ import os
 import sys
 import subprocess
 import shlex
+import shutil
 
 # requests might now be available. Don't run the "deploy" command in this case
 try:
@@ -13,11 +14,9 @@ except ImportError:
     pass
 
 if sys.version_info >= (3, 0):
-    from configparser import SafeConfigParser, NoSectionError, NoOptionError
+    from configparser import ConfigParser, NoSectionError, NoOptionError
 else:
-    from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
-
-working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    from ConfigParser import SafeConfigParser as ConfigParser, NoSectionError, NoOptionError
 
 # environment names
 general = 'general'
@@ -38,14 +37,15 @@ class Deployer(object):
     debug_mode = False
     already_built = False
 
-    def __init__(self, config_file_path = os.path.join(working_dir, 'deploy.ini')):
-        self.parser = SafeConfigParser()
+    def __init__(self, config_file_path=os.path.join(os.getcwd(), 'jonah.ini')):
+        self.parser = ConfigParser()
         self.parser.read(config_file_path)
+        self.working_dir = os.getcwd()
 
     @staticmethod
     def __dir__():
-        return ['build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag', 'test', 'stage',
-                'deploy', 'direct_deploy', 'clean']
+        return ['initialize', 'build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag',
+                'test', 'stage', 'deploy', 'direct_deploy', 'clean']
 
     def run(self, cmd, cwd=None, exceptions_should_bubble_up=False, spew=False):
         """Run a shell command"""
@@ -54,10 +54,12 @@ class Deployer(object):
 
         if spew:
             # return live output for the function to handle instead of one blob
-            return subprocess.Popen(shlex.split(cmd), cwd=working_dir if cwd is None else cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            return subprocess.Popen(shlex.split(cmd), cwd=self.working_dir if cwd is None else cwd, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
 
         try:
-            return subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT, cwd=working_dir if cwd is None else cwd)
+            return subprocess.check_output(shlex.split(cmd), cwd=self.working_dir if cwd is None else cwd,
+                                           stderr=subprocess.STDOUT,).decode('utf-8')
         except subprocess.CalledProcessError as e:
             if exceptions_should_bubble_up:
                 raise
@@ -80,7 +82,8 @@ class Deployer(object):
 
     def get_container_id(self):
         """Returns the currently running container's ID if any"""
-        container_id = self.run('docker ps -q --filter=ancestor=%s' % (self.get_configuration('DOCKER_IMAGE_NAME', 'develop'))).split('\n')[0]
+        docker_image_name = self.get_configuration('DOCKER_IMAGE_NAME', 'develop')
+        container_id = self.run('docker ps -q --filter=ancestor=%s' % docker_image_name).split('\n')[0]
         return container_id
 
     def full_name(self, environment):
@@ -94,6 +97,54 @@ class Deployer(object):
             print('\b', end='')
         print('\b', end='')
 
+    # User Actions #####################################################################################################
+
+    def initialize(self):
+        """Initialize a new jonah project in the current directory"""
+
+        if len(sys.argv) > 2 and sys.argv[2] != 'debug':
+            project_name = sys.argv[2]
+        else:
+            q = 'Please enter a name for your new project: '
+            if sys.version_info >= (3, 0):
+                project_name = input(q)
+            else:
+                project_name = raw_input(q)
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        support_files_dir = os.path.join(base_dir, 'support_files')
+
+        self.printout('Creating \'{}\' directory... '.format(project_name), False)
+        # In Python 3 there is exception FileExistsError. But it is not available
+        # in Python 2. For Python 2 fall back to OSError exception.
+        if sys.version_info < (3, 0):
+            FileExistsError = OSError
+        else:
+            from builtins import FileExistsError
+        try:
+            shutil.copytree(support_files_dir, os.path.join(self.working_dir, project_name))
+        except (OSError, FileExistsError):
+            print('A directory called "{}" already exists. Please choose another directory name.'.format(project_name))
+            return
+        self.printout('OK')
+
+        old_cwd = self.working_dir
+        os.chdir(os.path.join(self.working_dir, project_name))
+        self.working_dir = os.getcwd()
+        self.parser.read(os.path.join(self.working_dir, 'jonah.ini'))
+
+        self.build()
+        self.printout("Creating 'ddp' project... ", False)
+        output = self.run('docker run --env DJANGO_SETTINGS_MODULE= -v ' + self.working_dir + ':/code '
+                          + self.full_name(environment=develop)
+                          + ' django-admin.py startproject ddp')
+        self.printout(output, False)
+        if len(output) < 1:
+            self.printout("OK")
+
+        self.working_dir = os.getcwd()
+        os.chdir(old_cwd)
+
     def build(self, environment=develop, clean=False):
         """Build the image"""
         if self.already_built:
@@ -104,20 +155,20 @@ class Deployer(object):
         run_command = 'docker build -t %s %s'
         if clean:
             run_command += ' --no-cache'
-        proc = self.run(run_command % (self.full_name(environment=environment), working_dir), spew=True)
+        proc = self.run(run_command % (self.full_name(environment=environment), self.working_dir), spew=True)
 
         step_count = None
         line = None
         lastline = None
         while True:
             lastline = line
-            line = proc.stdout.readline()
+            line = proc.stdout.readline().decode('utf-8')
             if len(line) < 1:
                 break
             if 'Step ' in line:
                 self.backspace(step_count)
                 step_count = line.split(' : ')[0]
-                print('. ' + step_count, end='')
+                print('o ' + step_count, end='')
                 continue
             if 'Using cache' in line:
                 self.backspace(step_count + ' ')
@@ -138,7 +189,7 @@ class Deployer(object):
         """Stop a previously running development server"""
         self.printout("Stopping previously started containers... ", False)
         image_name = self.get_configuration(DOCKER_IMAGE_NAME, develop)
-        container_ids = self.run('docker ps -q --filter=ancestor=%s' % image_name).split("\n")
+        container_ids = self.run('docker ps -q --filter=ancestor=%s' % image_name).split('\n')
         for container_id in container_ids:
             if len(container_id) > 0:
                 self.printout(container_id + ' ', False)
@@ -152,7 +203,7 @@ class Deployer(object):
         output = self.run('docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD='
                           + self.get_configuration(ROOT_PASSWORD, develop)
                           + ' --env SECRET_KEY=' + self.get_configuration(SECRET_KEY, develop)
-                          + ' -v ' + working_dir+':/code ' + self.full_name(environment=develop))
+                          + ' -v ' + self.working_dir+':/code ' + self.full_name(environment=develop))
         self.printout("OK")
 
     def reload(self):
@@ -180,10 +231,11 @@ class Deployer(object):
                 current_tag = self.run('git describe --tags', exceptions_should_bubble_up=True).split('\n')[0]
             except subprocess.CalledProcessError:
                 current_tag = 'latest'
+            q = "Which tag should I  use? (Current is %s, leave empty for 'latest'): " % current_tag
             if sys.version_info >= (3, 0):
-                new_tag = input("Which tag should I  use? (Current is %s, leave empty for 'latest'): " % current_tag)
+                new_tag = input(q)
             else:
-                new_tag = raw_input("Which tag should I use? (Current is %s, leave empty for 'latest'): " % current_tag)
+                new_tag = raw_input(q)
         if len(new_tag) < 1 or new_tag == "\n":
             new_tag = 'latest'
         self.printout("Tagging as '%s'... " % new_tag, False)
@@ -204,7 +256,7 @@ class Deployer(object):
             cmd = 'docker exec -t -i %s python /code/ddp/manage.py compilemessages' % container_id.split(' ')[0]
         else:
             cmd = 'docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret' \
-                  + ' -v ' + working_dir + ':/code ' \
+                  + ' -v ' + self.working_dir + ':/code ' \
                   + '-w=/code/ddp/ ' + self.full_name(environment=develop) \
                   + ' python /code/ddp/manage.py compilemessages'
         try:
@@ -219,9 +271,9 @@ class Deployer(object):
         self.compilemessages()
         print('Beginning Unit Tests...')
         proc = self.run('docker run --env DJANGO_PRODUCTION=false --env SECRET_KEY=not_so_secret'
-                        + ' -v ' + working_dir + ':/code '
-                        + '-v=' + working_dir + '/artifacts:/artifacts '
-                        + '-w=/code/ddp/ '
+                        + ' -v ' + self.working_dir + ':/code '
+                        + '-v=' + self.working_dir + '/artifacts:/artifacts '
+                        + '-w=/code/ '
                         + self.full_name(environment=develop)
                         + ' ./test.sh',
                         spew=True)
