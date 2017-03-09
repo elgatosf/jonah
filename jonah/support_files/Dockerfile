@@ -27,17 +27,15 @@ RUN adduser --disabled-password --gecos '' r
 RUN apt-get install -y libffi-dev libssl-dev libpython2.7-dev
 
 # Install Python Requirements
-ADD deployment/requirements.txt /deployrequirements.txt
-RUN pip install -r /deployrequirements.txt
 ADD requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 
 # Install System Requirements
-ADD apt-packages.txt /aptpackages.txt
+ADD jonah/apt-packages.txt /aptpackages.txt
 RUN apt-get install -y $(grep -vE "^\s*#" /aptpackages.txt  | tr "\n" " ")
 
 # Run special system commands
-ADD system_initialization.sh /systeminitialization.sh
+ADD jonah/finalize_build.sh /systeminitialization.sh
 RUN chmod ug+x /systeminitialization.sh
 RUN /systeminitialization.sh
 
@@ -54,8 +52,8 @@ RUN mkdir /logs/gunicorn
 EXPOSE 80 8000
 
 # Configure Nginx
-ADD deployment /deployment
-RUN ln -s /deployment/nginx.conf /etc/nginx/sites-enabled/django_docker.conf
+ADD jonah /jonah
+RUN ln -s /jonah/nginx.conf /etc/nginx/sites-enabled/django_docker.conf
 RUN rm /etc/nginx/sites-enabled/default
 
 # Enable production settings by default; for development, this can be set to
@@ -64,18 +62,17 @@ ENV DJANGO_PRODUCTION=true
 ENV NEW_RELIC_LICENSE_KEY=invalid
 ENV NEW_RELIC_APP_NAME=Developer
 ENV DJANGO_SETTINGS_MODULE=ddp.settings
-ENV NEW_RELIC_CONFIG_FILE=/deployment/newrelic.ini
+ENV NEW_RELIC_CONFIG_FILE=/jonah/newrelic.ini
 ENV NEW_RELIC_ENVIRONMENT=development
 ENV TERM xterm
 
 # Configure Django project
 ADD . /code
 WORKDIR /code
-RUN chmod ug+x /code/deployment/initialize.sh
+RUN chmod ug+x /code/jonah/spinup.sh
 
 # Configure Supervisor
-RUN touch /code/supervisord_local.conf
-RUN cat /code/deployment/supervisord.conf /code/supervisord_local.conf > /etc/supervisor/conf.d/supervisord.conf
+ADD jonah/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Run Supervisor
 CMD ["/usr/bin/supervisord"]

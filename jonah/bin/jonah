@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+import sys
+import jonah
+
+if __name__ == '__main__':
+    d = jonah.Deployer()
+
+    if len(sys.argv) > 1 and sys.argv[1] in dir(d):
+        if len(sys.argv) > 2 and sys.argv[2] == 'debug':
+            d.debug_mode = True
+        getattr(d, sys.argv[1])()
+    else:
+        print("USAGE:")
+        print("\t%s <COMMAND>, where command is one of the following:\n" % sys.argv[0])
+
+        for arg in dir(d):
+            print("\t" + arg.ljust(10) + "\t" + getattr(d, arg).__doc__)
+        exit(0)
