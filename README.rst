@@ -14,14 +14,6 @@ staging or production servers.
    :alt: Animated GIF of jonah commands in action
 
 
-**Using Jonah, you can develop your Django application entirely within Docker.** This way, your code runs in the exact
-same environment, whether it's on your machine, on the test server, or in deployment. Jonah saves you a lot of the
-setup work in the beginning, letting you jump into a fully prepared, but configurable, Django Docker Project.
-
-If you are using TDD, you can include Jonah on your build server to make sure all tests pass before pushing it to your
-staging or production servers.
-
-
 Getting Started
 ---------------
 
