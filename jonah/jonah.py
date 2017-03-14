@@ -99,6 +99,7 @@ class Deployer(object):
 
     # User Actions #####################################################################################################
 
+
     def check_docker(self):
         """Check that the Docker executable is available on the user's system"""
         try:
