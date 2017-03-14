@@ -99,8 +99,18 @@ class Deployer(object):
 
     # User Actions #####################################################################################################
 
+
+    def check_docker(self):
+        """Check that the Docker executable is available on the user's system"""
+        try:
+            docker_version_output = self.run('docker version', exceptions_should_bubble_up=True)
+        except (subprocess.CalledProcessError, OSError) as e:
+            self.printout('Error while calling "docker" executable. Is Docker installed on your system?')
+            exit(1)
+
     def initialize(self):
         """Initialize a new jonah project in the current directory"""
+        self.check_docker()
 
         if len(sys.argv) > 2 and sys.argv[2] != 'debug':
             project_name = sys.argv[2]
