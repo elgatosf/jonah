@@ -133,7 +133,7 @@ class Deployer(object):
         try:
             shutil.copytree(support_files_dir, os.path.join(self.working_dir, project_name))
         except (OSError, FileExistsError):
-            print('A directory called "{}" already exists. Please choose another directory name.'.format(project_name))
+            print(sys.exc_info()[1])
             return
         self.printout('OK')
 
