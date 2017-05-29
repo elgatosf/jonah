@@ -43,8 +43,8 @@ class Deployer(object):
         self.working_dir = os.getcwd()
 
     @staticmethod
-    def __dir__():
-        return ['initialize', 'build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag',
+    def __dir__(**kwargs):
+        return ['initialize', 'init', 'build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag',
                 'test', 'stage', 'deploy', 'direct_deploy', 'clean']
 
     def run(self, cmd, cwd=None, exceptions_should_bubble_up=False, spew=False):
@@ -108,6 +108,10 @@ class Deployer(object):
             exit(1)
 
     def initialize(self):
+        """(alias for init)"""
+        return self.init()
+
+    def init(self):
         """Initialize a new jonah project in the current directory"""
         self.check_docker()
 
