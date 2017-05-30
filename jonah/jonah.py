@@ -6,6 +6,7 @@ import sys
 import subprocess
 import shlex
 import shutil
+import textwrap
 
 # requests might now be available. Don't run the "deploy" command in this case
 try:
@@ -43,9 +44,9 @@ class Deployer(object):
         self.working_dir = os.getcwd()
 
     @staticmethod
-    def __dir__():
-        return ['initialize', 'build', 'cleanbuild', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag',
-                'test', 'stage', 'deploy', 'direct_deploy', 'clean']
+    def __dir__(**kwargs):
+        return ['initialize', 'init', 'build', 'clean_build', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag',
+                'test', 'stage', 'deploy', 'direct_deploy', 'cleanup']
 
     def run(self, cmd, cwd=None, exceptions_should_bubble_up=False, spew=False):
         """Run a shell command"""
@@ -100,7 +101,7 @@ class Deployer(object):
     # User Actions #####################################################################################################
 
     def check_docker(self):
-        """Check that the Docker executable is available on the user's system"""
+        """Check that the Docker executable is available on the user's system."""
         try:
             docker_version_output = self.run('docker version', exceptions_should_bubble_up=True)
         except (subprocess.CalledProcessError, OSError) as e:
@@ -108,7 +109,11 @@ class Deployer(object):
             exit(1)
 
     def initialize(self):
-        """Initialize a new jonah project in the current directory"""
+        """(alias for init)"""
+        return self.init()
+
+    def init(self):
+        """Initialize a new jonah project in the current directory."""
         self.check_docker()
 
         if len(sys.argv) > 2 and sys.argv[2] != 'debug':
@@ -133,7 +138,7 @@ class Deployer(object):
         try:
             shutil.copytree(support_files_dir, os.path.join(self.working_dir, project_name))
         except (OSError, FileExistsError):
-            print('A directory called "{}" already exists. Please choose another directory name.'.format(project_name))
+            print(sys.exc_info()[1])
             return
         self.printout('OK')
 
@@ -155,7 +160,7 @@ class Deployer(object):
         os.chdir(old_cwd)
 
     def build(self, environment=develop, clean=False):
-        """Build the image"""
+        """Build the image."""
         if self.already_built:
             return
 
@@ -190,12 +195,12 @@ class Deployer(object):
             print("\nBuild failed with '{}'".format(lastline.strip()))
         self.already_built = True
 
-    def cleanbuild(self, environment=develop):
-        """Build the image from scratch"""
+    def clean_build(self, environment=develop):
+        """Build the image from scratch instead of relying on cached layers."""
         self.build(environment=environment, clean=True)
 
     def stop(self):
-        """Stop a previously running development server"""
+        """Stop a previously running development server."""
         self.printout("Stopping previously started containers... ", False)
         image_name = self.get_configuration(DOCKER_IMAGE_NAME, develop)
         container_ids = self.run('docker ps -q --filter=ancestor=%s' % image_name).split('\n')
@@ -206,7 +211,7 @@ class Deployer(object):
         self.printout("OK")
 
     def develop(self):
-        """Run dev server"""
+        """Run development server that listens on port 80."""
         self.build(develop)
         self.printout("Starting dev server... ", False)
         output = self.run('docker run -d -p 80:80 --env DJANGO_PRODUCTION=false --env ROOT_PASSWORD='
@@ -216,13 +221,13 @@ class Deployer(object):
         self.printout("OK")
 
     def reload(self):
-        """Reload Django process on dev server"""
+        """Reload the Django process on the development server."""
         self.printout("Reloading Django... ", False)
         self.run('docker exec -t -i %s killall gunicorn' % self.get_container_id())
         self.printout("OK")
 
     def shell(self):
-        """Get a shell on the dev server"""
+        """Get a shell on the development server."""
         container_id = self.get_container_id()
         if len(container_id) < 1:
             self.develop()
@@ -231,7 +236,7 @@ class Deployer(object):
         subprocess.call(cmd, shell=True)
 
     def tag(self, environment, tag=None):
-        """Tag git version and docker version"""
+        """Add git and docker tags."""
         self.build()
         if tag:
             new_tag = tag
@@ -255,7 +260,7 @@ class Deployer(object):
         return new_tag
 
     def compilemessages(self):
-        """Compile I18N Strings"""
+        """Compile internationalization Strings."""
         container_id = self.get_container_id()
 
         self.printout("Running compilemessages... ", False)
@@ -275,7 +280,7 @@ class Deployer(object):
             self.printout("No messages found")
 
     def test(self):
-        """Build and run Unit Tests"""
+        """Build and run Unit Tests."""
         self.build()
         self.compilemessages()
         print('Beginning Unit Tests...')
@@ -318,25 +323,25 @@ class Deployer(object):
         self.printout("OK")
 
     def stage(self):
-        """Deploy on test servers"""
+        """Deploy to staging."""
         self.deploy(environment=staging)
 
     def direct_deploy(self, environment=production):
-        """Deploy as tag master on production server, without warning. Danger Zone."""
+        """Deploy as tag "master" on production server, without warning and without asking for confirmation. Danger Zone. """
         self.build()
         self.tag(environment, tag=environment)
         self.push(environment)
         self.notify_newrelic(environment)
 
     def deploy(self, environment=production):
-        """Deploy on production servers"""
+        """Deploy to production. This command will ask you for a tag before pushing anything to the server."""
         self.test()
         tag = 'latest' if environment == staging else None
         self.tag(environment, tag=tag)
         self.direct_deploy(environment=environment)
 
-    def clean(self):
-        """Delete exited containers, dangling images, and volumes"""
+    def cleanup(self):
+        """Delete exited containers, dangling images, and volumes, in order to clean up hard drive space."""
         self.printout("Deleting exited containers... ", False)
         exited_containers = self.run("docker ps -a -q -f status=exited").split("\n")
         for exited_container in exited_containers:
@@ -372,8 +377,20 @@ if __name__ == '__main__':
         getattr(d, sys.argv[1])()
     else:
         print("USAGE:")
-        print("\t%s <COMMAND>, where command is one of the following:\n" % sys.argv[0])
+        print("  {} <COMMAND>, where <COMMMAND> is one of the following:".format(sys.argv[0]))
 
-        for arg in dir(d):
-            print("\t" + arg.ljust(10) + "\t" + getattr(d, arg).__doc__)
+        commands = {}
+        commands["General"] = ['init', 'build', 'clean_build', 'cleanup']
+        commands["Development"] = ['develop', 'reload', 'shell', 'stop', 'test', 'compilemessages']
+        commands["Deployment"] = ['stage', 'deploy', 'tag', 'direct_deploy']
+
+        for groupname in commands.keys():
+            print("\n  {}:".format(groupname))
+            for command_name in commands[groupname]:
+                command_help = textwrap.wrap(getattr(d, command_name).__doc__, 56)
+                print("  - {}\t{}".format(command_name.ljust(12), command_help[0]))
+                if len(command_help) > 1:
+                    for additional_line in command_help[1:]:
+                        print((" " * 20) + "\t" + additional_line)
+
         exit(0)

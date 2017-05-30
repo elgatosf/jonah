@@ -27,7 +27,7 @@ Then run it using the ``jonah <command>`` syntax. To start a new project, run
 
 ::
 
-    > jonah initialize your_new_project
+    > jonah init your_new_project
 
 Jonah will then create a new directory called ``your_new_project`` in the current working directory and create an empty
 Django project inside.
@@ -110,7 +110,7 @@ Full List of Commands
 ===================== ==================================================================================================
 Command               Description
 ===================== ==================================================================================================
-``initialize``	      Initialize a new jonah project in the current directory
+``init``	          Initialize a new jonah project in the current directory
 ``build``             Build the image.
 ``cleanbuild``        Build the image from scratch instead of relying on cached layers.
 ``develop``   	      Run dev server
@@ -132,7 +132,7 @@ To get a full list of commands, run ``deploy.py`` without any arguments.
 Configuration
 -------------
 
-The ``initialize`` command will create a number of configuration files. Here is what they are used for:
+The ``init`` command will create a number of configuration files. Here is what they are used for:
 
 ============================= ==========================================================================================
 File                          Description
