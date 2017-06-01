@@ -7,7 +7,11 @@ import subprocess
 import shlex
 import shutil
 import textwrap
-import version
+try:
+    import jonah.version
+except ImportError:
+    # Python 2 compatibility
+    import version
 
 # requests might not be available. Don't run the "deploy" command in this case
 try:
