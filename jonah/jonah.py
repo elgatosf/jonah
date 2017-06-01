@@ -357,7 +357,7 @@ class Deployer(object):
         self.deploy(environment=staging)
 
     def direct_deploy(self, environment=production):
-        """Deploy as tag "master" on production server, without warning and without asking for confirmation. Danger Zone. """
+        """Deploy as tag "master" on production server, without warning or asking for confirmation. Danger Zone. """
         self.build()
         self.tag(environment, tag=environment)
         self.push(environment)
