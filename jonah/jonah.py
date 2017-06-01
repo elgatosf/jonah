@@ -8,7 +8,7 @@ import shlex
 import shutil
 import textwrap
 
-# requests might now be available. Don't run the "deploy" command in this case
+# requests might not be available. Don't run the "deploy" command in this case
 try:
     import requests
 except ImportError:
@@ -48,6 +48,30 @@ class Deployer(object):
         return ['initialize', 'init', 'build', 'clean_build', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag',
                 'test', 'stage', 'deploy', 'direct_deploy', 'cleanup']
 
+    def help(self, argv=('jonah',)):
+        """Output the help screen"""
+        output = ""
+
+        output += "USAGE:\n"
+        output += "  {} <COMMAND>, where <COMMMAND> is one of the following:\n".format(argv[0])
+
+        commands = {"General": ['init', 'build', 'clean_build', 'cleanup'],
+                    "Development": ['develop', 'reload', 'shell', 'stop', 'test', 'compilemessages'],
+                    "Deployment": ['stage', 'deploy', 'tag', 'direct_deploy']}
+
+        for group_name in commands.keys():
+            output += "\n  {}:\n".format(group_name)
+            for command_name in commands[group_name]:
+                command_help = textwrap.wrap(getattr(self, command_name).__doc__, 56)
+                output += "  - {}\t{}\n".format(command_name.ljust(12), command_help[0])
+                if len(command_help) > 1:
+                    for additional_line in command_help[1:]:
+                        output += (" " * 20) + "\t" + additional_line + "\n"
+
+        return output
+
+    # Helper Methods ###################################################################################################
+
     def run(self, cmd, cwd=None, exceptions_should_bubble_up=False, spew=False):
         """Run a shell command"""
         if self.debug_mode:
@@ -55,8 +79,8 @@ class Deployer(object):
 
         if spew:
             # return live output for the function to handle instead of one blob
-            return subprocess.Popen(shlex.split(cmd), cwd=self.working_dir if cwd is None else cwd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
+            return subprocess.Popen(shlex.split(cmd), cwd=self.working_dir if cwd is None else cwd,
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         try:
             return subprocess.check_output(shlex.split(cmd), cwd=self.working_dir if cwd is None else cwd,
@@ -376,21 +400,5 @@ if __name__ == '__main__':
             d.debug_mode = True
         getattr(d, sys.argv[1])()
     else:
-        print("USAGE:")
-        print("  {} <COMMAND>, where <COMMMAND> is one of the following:".format(sys.argv[0]))
-
-        commands = {}
-        commands["General"] = ['init', 'build', 'clean_build', 'cleanup']
-        commands["Development"] = ['develop', 'reload', 'shell', 'stop', 'test', 'compilemessages']
-        commands["Deployment"] = ['stage', 'deploy', 'tag', 'direct_deploy']
-
-        for groupname in commands.keys():
-            print("\n  {}:".format(groupname))
-            for command_name in commands[groupname]:
-                command_help = textwrap.wrap(getattr(d, command_name).__doc__, 56)
-                print("  - {}\t{}".format(command_name.ljust(12), command_help[0]))
-                if len(command_help) > 1:
-                    for additional_line in command_help[1:]:
-                        print((" " * 20) + "\t" + additional_line)
-
+        print(d.help(sys.argv))
         exit(0)
