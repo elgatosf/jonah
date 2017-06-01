@@ -7,6 +7,7 @@ import subprocess
 import shlex
 import shutil
 import textwrap
+import version
 
 # requests might not be available. Don't run the "deploy" command in this case
 try:
@@ -45,17 +46,17 @@ class Deployer(object):
 
     @staticmethod
     def __dir__(**kwargs):
-        return ['initialize', 'init', 'build', 'clean_build', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag',
-                'test', 'stage', 'deploy', 'direct_deploy', 'cleanup']
+        return ['initialize', 'init', 'build', 'clean_build', 'develop', 'compilemessages', 'stop', 'reload', 'shell',
+                'tag', 'test', 'stage', 'deploy', 'direct_deploy', 'cleanup', 'version']
 
     def help(self, argv=('jonah',)):
         """Output the help screen"""
-        output = ""
+        output = "Jonah {} -- ".format(version.__version__)
 
         output += "USAGE:\n"
         output += "  {} <COMMAND>, where <COMMMAND> is one of the following:\n".format(argv[0])
 
-        commands = {"General": ['init', 'build', 'clean_build', 'cleanup'],
+        commands = {"General": ['init', 'build', 'clean_build', 'cleanup', 'version'],
                     "Development": ['develop', 'reload', 'shell', 'stop', 'test', 'compilemessages'],
                     "Deployment": ['stage', 'deploy', 'tag', 'direct_deploy']}
 
@@ -123,6 +124,10 @@ class Deployer(object):
         print('\b', end='')
 
     # User Actions #####################################################################################################
+
+    def version(self):
+        """Print out the version number and exit"""
+        self.printout(version.__version__)
 
     def check_docker(self):
         """Check that the Docker executable is available on the user's system."""
