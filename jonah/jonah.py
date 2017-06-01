@@ -7,8 +7,9 @@ import subprocess
 import shlex
 import shutil
 import textwrap
+import version
 
-# requests might now be available. Don't run the "deploy" command in this case
+# requests might not be available. Don't run the "deploy" command in this case
 try:
     import requests
 except ImportError:
@@ -45,8 +46,32 @@ class Deployer(object):
 
     @staticmethod
     def __dir__(**kwargs):
-        return ['initialize', 'init', 'build', 'clean_build', 'develop', 'compilemessages', 'stop', 'reload', 'shell', 'tag',
-                'test', 'stage', 'deploy', 'direct_deploy', 'cleanup']
+        return ['initialize', 'init', 'build', 'clean_build', 'develop', 'compilemessages', 'stop', 'reload', 'shell',
+                'tag', 'test', 'stage', 'deploy', 'direct_deploy', 'cleanup', 'version']
+
+    def help(self, argv=('jonah',)):
+        """Output the help screen"""
+        output = "Jonah {} -- ".format(version.__version__)
+
+        output += "USAGE:\n"
+        output += "  {} <COMMAND>, where <COMMMAND> is one of the following:\n".format(argv[0])
+
+        commands = {"General": ['init', 'build', 'clean_build', 'cleanup', 'version'],
+                    "Development": ['develop', 'reload', 'shell', 'stop', 'test', 'compilemessages'],
+                    "Deployment": ['stage', 'deploy', 'tag', 'direct_deploy']}
+
+        for group_name in commands.keys():
+            output += "\n  {}:\n".format(group_name)
+            for command_name in commands[group_name]:
+                command_help = textwrap.wrap(getattr(self, command_name).__doc__, 56)
+                output += "  - {}\t{}\n".format(command_name.ljust(12), command_help[0])
+                if len(command_help) > 1:
+                    for additional_line in command_help[1:]:
+                        output += (" " * 20) + "\t" + additional_line + "\n"
+
+        return output
+
+    # Helper Methods ###################################################################################################
 
     def run(self, cmd, cwd=None, exceptions_should_bubble_up=False, spew=False):
         """Run a shell command"""
@@ -55,8 +80,8 @@ class Deployer(object):
 
         if spew:
             # return live output for the function to handle instead of one blob
-            return subprocess.Popen(shlex.split(cmd), cwd=self.working_dir if cwd is None else cwd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
+            return subprocess.Popen(shlex.split(cmd), cwd=self.working_dir if cwd is None else cwd,
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         try:
             return subprocess.check_output(shlex.split(cmd), cwd=self.working_dir if cwd is None else cwd,
@@ -91,7 +116,8 @@ class Deployer(object):
         # environment should be 'develop', 'staging', or 'production'
         return self.get_configuration('DOCKER_IMAGE_NAME', environment)
 
-    def backspace(self, string_to_escape):
+    @staticmethod
+    def backspace(string_to_escape):
         if string_to_escape is None:
             return
         for char in string_to_escape:
@@ -99,6 +125,10 @@ class Deployer(object):
         print('\b', end='')
 
     # User Actions #####################################################################################################
+
+    def version(self):
+        """Print out the version number and exit"""
+        self.printout(version.__version__)
 
     def check_docker(self):
         """Check that the Docker executable is available on the user's system."""
@@ -327,7 +357,7 @@ class Deployer(object):
         self.deploy(environment=staging)
 
     def direct_deploy(self, environment=production):
-        """Deploy as tag "master" on production server, without warning and without asking for confirmation. Danger Zone. """
+        """Deploy as tag "master" on production server, without warning or asking for confirmation. Danger Zone. """
         self.build()
         self.tag(environment, tag=environment)
         self.push(environment)
@@ -376,21 +406,5 @@ if __name__ == '__main__':
             d.debug_mode = True
         getattr(d, sys.argv[1])()
     else:
-        print("USAGE:")
-        print("  {} <COMMAND>, where <COMMMAND> is one of the following:".format(sys.argv[0]))
-
-        commands = {}
-        commands["General"] = ['init', 'build', 'clean_build', 'cleanup']
-        commands["Development"] = ['develop', 'reload', 'shell', 'stop', 'test', 'compilemessages']
-        commands["Deployment"] = ['stage', 'deploy', 'tag', 'direct_deploy']
-
-        for groupname in commands.keys():
-            print("\n  {}:".format(groupname))
-            for command_name in commands[groupname]:
-                command_help = textwrap.wrap(getattr(d, command_name).__doc__, 56)
-                print("  - {}\t{}".format(command_name.ljust(12), command_help[0]))
-                if len(command_help) > 1:
-                    for additional_line in command_help[1:]:
-                        print((" " * 20) + "\t" + additional_line)
-
+        print(d.help(sys.argv))
         exit(0)
