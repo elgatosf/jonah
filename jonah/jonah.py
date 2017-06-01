@@ -116,7 +116,8 @@ class Deployer(object):
         # environment should be 'develop', 'staging', or 'production'
         return self.get_configuration('DOCKER_IMAGE_NAME', environment)
 
-    def backspace(self, string_to_escape):
+    @staticmethod
+    def backspace(string_to_escape):
         if string_to_escape is None:
             return
         for char in string_to_escape:
