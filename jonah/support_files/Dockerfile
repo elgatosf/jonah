@@ -28,7 +28,7 @@ RUN apt-get install -y libffi-dev libssl-dev libpython2.7-dev
 
 # Install Python Requirements
 ADD requirements.txt /requirements.txt
-RUN pip install -r /requirements.txt
+RUN pip install -r /requirements.txt --ignore-installed
 
 # Install System Requirements
 ADD jonah/apt-packages.txt /aptpackages.txt
