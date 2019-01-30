@@ -260,13 +260,15 @@ class Deployer(object):
         self.run('docker exec -t -i %s killall gunicorn' % self.get_container_id())
         self.printout("OK")
 
-    def shell(self):
+    def shell(self, command=None):
         """Get a shell on the development server."""
         container_id = self.get_container_id()
         if len(container_id) < 1:
             self.develop()
             container_id = self.get_container_id()
-        cmd = 'docker exec -t -i %s /bin/bash' % container_id.split(' ')[0]
+        if command is None or command is '':
+            command = '/bin/bash'
+        cmd = 'docker exec -t -i %s %s' % (container_id.split(' ')[0], command)
         subprocess.call(cmd, shell=True)
 
     def tag(self, environment, tag=None):
@@ -408,7 +410,13 @@ if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] in dir(d):
         if len(sys.argv) > 2 and sys.argv[2] == 'debug':
             d.debug_mode = True
-        getattr(d, sys.argv[1])()
+        if len(sys.argv) > 2 and sys.argv[1] == 'shell':
+            command = ' '.join(sys.argv[2:])
+            if sys.argv[2] == 'debug':
+                command = ' '.join(sys.argv[3:])
+            getattr(d, sys.argv[1])(command)
+        else:
+            getattr(d, sys.argv[1])()
     else:
         print(d.help(sys.argv))
         exit(0)
