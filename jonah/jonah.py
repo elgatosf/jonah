@@ -268,7 +268,10 @@ class Deployer(object):
             container_id = self.get_container_id()
         if command is None or command is '':
             command = '/bin/bash'
-        cmd = 'docker exec -t -i %s %s' % (container_id.split(' ')[0], command)
+        tty = "-t"
+        if not sys.stdout.isatty():
+            tty = ""
+        cmd = 'docker exec -i %s %s %s' % (tty, container_id.split(' ')[0], command)
         subprocess.call(cmd, shell=True)
 
     def tag(self, environment, tag=None):
